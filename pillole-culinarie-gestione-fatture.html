@@ -752,8 +752,16 @@ function getMesiProgetto(p){
 function progettoAttivo(p,anno,mese){return getMesiProgetto(p).some(x=>x.anno==anno&&x.mese==mese);}
 function fatturatoCliente(p,anno,mese){
   if(p.tipo==='spot'){
-    if(!p.scadenze||p.scadenze.length===0)return getMesiProgetto(p).some(x=>x.anno==anno&&x.mese==mese)?parseFloat(p.importo)||0:0;
-    return p.scadenze.filter(sc=>{if(!sc.data)return false;const d=new Date(sc.data+'T00:00:00');return d.getFullYear()==anno&&d.getMonth()+1==mese;}).reduce((a,sc)=>a+(parseFloat(sc.importo)||0),0);
+    if(!p.scadenze||p.scadenze.length===0){
+      // Nessuna scadenza: mostra solo nel mese di inizio
+      return(anno==parseInt(p.annoInizio)&&mese==parseInt(p.meseInizio))?parseFloat(p.importo)||0:0;
+    }
+    // Con scadenze: mostra SOLO nei mesi con data corrispondente
+    return p.scadenze.filter(sc=>{
+      if(!sc.data)return false;
+      const d=new Date(sc.data+'T00:00:00');
+      return d.getFullYear()==anno&&d.getMonth()+1==mese;
+    }).reduce((a,sc)=>a+(parseFloat(sc.importo)||0),0);
   }
   if(!progettoAttivo(p,anno,mese))return 0;
   return parseFloat(p.importo)||0;
@@ -961,7 +969,7 @@ function renderCalMese(anno,mese){
     const f=fatturatoCliente(p,anno,mese);if(f<=0)return;
     if(p.tipo==='spot'&&p.scadenze&&p.scadenze.length>0){
       p.scadenze.filter(sc=>{if(!sc.data)return false;const d=new Date(sc.data+'T00:00:00');return d.getFullYear()==anno&&d.getMonth()+1==mese;}).forEach(sc=>righeClienti.push({cliente:p.cliente,servizio:p.servizio,importo:parseFloat(sc.importo)||0,tipo:'spot',desc:sc.desc,data:sc.data}));
-    }else{righeClienti.push({cliente:p.cliente,servizio:p.servizio,importo:f,tipo:p.tipo,desc:'',data:''});}
+    }else if(f>0){righeClienti.push({cliente:p.cliente,servizio:p.servizio,importo:f,tipo:p.tipo,desc:'',data:''});}
   });
   let profMap={};
   state.professionisti.forEach(prof=>{
@@ -1314,7 +1322,7 @@ function toggleTipo(){
   const t=document.getElementById('p-tipo').value;
   document.getElementById('p-ricorrente-fields').classList.toggle('hidden',t==='spot');
   document.getElementById('p-spot-fields').classList.toggle('hidden',t==='ricorrente');
-  document.getElementById('p-importo-label').textContent=t==='ricorrente'?'Importo / mese (€, escluso IVA)':'Importo prima tranche (€) — oppure usa le scadenze sotto';
+  document.getElementById('p-importo-label').textContent=t==='ricorrente'?'Importo / mese (€, escluso IVA)':'Importo totale progetto (€) — usato per calcolare le % delle tranche';
 }
 function toggleCostoTipo(){
   const t=document.getElementById('new-prof-tipo').value;
@@ -1322,6 +1330,14 @@ function toggleCostoTipo(){
   document.getElementById('new-prof-anno-group').style.display=t==='unatantum'?'block':'none';
 }
 function renderScadenzeList(){document.getElementById('scadenze-list').innerHTML=tempScadenze.length===0?'<div style="font-size:12px;color:var(--text-dim);margin-bottom:8px;padding:4px 0">Nessuna scadenza.</div>':tempScadenze.map((sc,i)=>`<div style="display:flex;gap:10px;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:6px"><span style="flex:1.5;font-size:13px">${sc.desc||'Tranche '+(i+1)}</span><span class="text-gold">${fmt(parseFloat(sc.importo)||0)}</span><span style="font-size:12px;color:var(--text-muted)">${sc.data?fmtDate(sc.data):'nessuna data'}</span><button class="delete-btn" onclick="removeScadenza(${i})">✕</button></div>`).join('');}
+function calcTrancheImporto(){
+  const pct=parseFloat(document.getElementById('sc-pct').value);
+  if(!pct||pct<=0||pct>100) return;
+  const totale=parseFloat(document.getElementById('p-importo').value)||0;
+  if(totale>0){
+    document.getElementById('sc-importo').value=Math.round(totale*pct/100*100)/100;
+  }
+}
 function addScadenza(){const desc=document.getElementById('sc-desc').value.trim(),importo=parseFloat(document.getElementById('sc-importo').value),data=document.getElementById('sc-data').value;if(!importo){alert('Inserisci l\'importo.');return;}tempScadenze.push({desc,importo,data});document.getElementById('sc-desc').value='';document.getElementById('sc-importo').value='';document.getElementById('sc-data').value='';renderScadenzeList();}
 function removeScadenza(i){tempScadenze.splice(i,1);renderScadenzeList();}
 function populateProfSelect(){document.getElementById('new-prof-select').innerHTML='<option value="">-- Seleziona professionista --</option>'+state.professionisti.map(p=>`<option value="${p.id}">${p.nome} (${p.ruolo})</option>`).join('');}
