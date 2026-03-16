@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pillole Culinarie – Gestione Fatture</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0f0e0c;--surface:#1a1916;--surface2:#232220;--border:#2e2c29;--gold:#c9a96e;--gold-light:#e8c98a;--gold-dim:#7a6340;--text:#f0ece4;--text-muted:#8a8278;--text-dim:#5a5650;--green:#6a9e6a;--red:#c06060;--blue:#6a8ab0;--purple:#9a7ab0;--radius:10px;--transition:0.2s ease;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;min-height:100vh;}
+.app{display:flex;height:100vh;overflow:hidden;}
+.sidebar{width:230px;min-width:230px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;}
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column;}
+.sidebar-logo{padding:24px 20px 16px;border-bottom:1px solid var(--border);}
+.sidebar-logo .brand{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:500;color:var(--gold);line-height:1.2;}
+.sidebar-logo .sub{font-size:10px;color:var(--text-dim);letter-spacing:0.15em;text-transform:uppercase;margin-top:2px;}
+.nav-section{padding:12px 0;border-bottom:1px solid var(--border);}
+.nav-label{font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-dim);padding:0 20px 8px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;cursor:pointer;color:var(--text-muted);transition:var(--transition);font-size:13px;border-left:2px solid transparent;}
+.nav-item:hover{color:var(--text);background:rgba(201,169,110,0.05);}
+.nav-item.active{color:var(--gold);background:rgba(201,169,110,0.08);border-left-color:var(--gold);}
+.nav-icon{font-size:15px;width:18px;text-align:center;}
+.page-header{padding:24px 32px 0;}
+.page-title{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:500;}
+.page-sub{font-size:12px;color:var(--text-dim);margin-top:3px;}
+.header-actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;align-items:center;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius);border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;transition:var(--transition);text-decoration:none;}
+.btn-primary{background:var(--gold);color:#1a1510;}.btn-primary:hover{background:var(--gold-light);}
+.btn-ghost{background:transparent;color:var(--text-muted);border:1px solid var(--border);}.btn-ghost:hover{border-color:var(--gold-dim);color:var(--text);}
+.btn-danger{background:rgba(192,96,96,0.15);color:var(--red);border:1px solid rgba(192,96,96,0.3);}.btn-danger:hover{background:rgba(192,96,96,0.25);}
+.btn-email{background:rgba(106,138,176,0.12);color:var(--blue);border:1px solid rgba(106,138,176,0.3);}.btn-email:hover{background:rgba(106,138,176,0.22);}
+.btn-sm{padding:5px 10px;font-size:12px;}
+.content{padding:20px 32px 40px;flex:1;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;}
+.card-title{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:500;color:var(--gold);margin-bottom:14px;}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;}
+.stat-label{font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-dim);}
+.stat-value{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:500;color:var(--text);margin:4px 0 2px;}
+.stat-note{font-size:11px;color:var(--text-muted);}
+.stat-card.gold .stat-value{color:var(--gold);}.stat-card.green .stat-value{color:var(--green);}.stat-card.red .stat-value{color:var(--red);}.stat-card.purple .stat-value{color:var(--purple);}
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+th{font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-dim);padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;}
+td{padding:11px 14px;border-bottom:1px solid rgba(46,44,41,0.5);font-size:13px;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}tr:hover td{background:rgba(201,169,110,0.03);}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;}
+.badge-gold{background:rgba(201,169,110,0.12);color:var(--gold);border:1px solid rgba(201,169,110,0.25);}
+.badge-blue{background:rgba(106,138,176,0.12);color:var(--blue);border:1px solid rgba(106,138,176,0.25);}
+.badge-purple{background:rgba(154,122,176,0.12);color:var(--purple);border:1px solid rgba(154,122,176,0.25);}
+.badge-red{background:rgba(192,96,96,0.12);color:var(--red);border:1px solid rgba(192,96,96,0.25);}
+.badge-green{background:rgba(106,158,106,0.12);color:var(--green);border:1px solid rgba(106,158,106,0.25);}
+.month-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;}
+.month-chip{padding:6px 14px;border-radius:20px;border:1px solid var(--border);cursor:pointer;font-size:12px;color:var(--text-muted);transition:var(--transition);}
+.month-chip:hover{border-color:var(--gold-dim);color:var(--text);}
+.month-chip.active{background:rgba(201,169,110,0.12);border-color:var(--gold);color:var(--gold);font-weight:500;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px;backdrop-filter:blur(4px);}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px;width:100%;max-width:680px;max-height:92vh;overflow-y:auto;}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:500;color:var(--gold);margin-bottom:20px;}
+.modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;padding-top:18px;border-top:1px solid var(--border);}
+.form-group{margin-bottom:16px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+label{display:block;font-size:12px;color:var(--text-muted);margin-bottom:6px;}
+input,select,textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;transition:var(--transition);outline:none;}
+input:focus,select:focus,textarea:focus{border-color:var(--gold-dim);box-shadow:0 0 0 2px rgba(201,169,110,0.1);}
+textarea{resize:vertical;min-height:60px;}select option{background:var(--surface);}
+.divider{border:none;border-top:1px solid var(--border);margin:20px 0;}
+.section-title{font-size:11px;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-dim);margin-bottom:10px;}
+.progress-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:6px;}
+.progress-fill{height:100%;border-radius:2px;background:var(--gold);}.progress-fill.red{background:var(--red);}.progress-fill.purple{background:var(--purple);}
+.pills-row{display:flex;flex-wrap:wrap;gap:6px;}
+.pill{padding:3px 10px;border-radius:12px;font-size:11px;background:var(--surface2);color:var(--text-muted);border:1px solid var(--border);}
+.empty-state{text-align:center;padding:60px 20px;color:var(--text-dim);}
+.empty-state .icon{font-size:40px;margin-bottom:12px;}
+::-webkit-scrollbar{width:6px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+.hidden{display:none !important;}
+.text-right{text-align:right;}.text-gold{color:var(--gold);}.text-green{color:var(--green);}.text-red{color:var(--red);}.text-purple{color:var(--purple);}.text-muted{color:var(--text-muted);}.fw-500{font-weight:500;}
+.delete-btn{background:none;border:none;cursor:pointer;color:var(--text-dim);font-size:16px;transition:var(--transition);padding:2px 6px;}.delete-btn:hover{color:var(--red);}
+.sc-add-box{background:var(--bg);border:1px dashed var(--border);border-radius:8px;padding:14px;margin-top:8px;}
+.email-preview{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px;font-size:12px;white-space:pre-wrap;line-height:1.7;color:var(--text-muted);max-height:320px;overflow-y:auto;font-family:'Courier New',monospace;}
+.piva-tag{background:rgba(201,169,110,0.08);border:1px solid rgba(201,169,110,0.2);border-radius:6px;padding:2px 10px;font-size:12px;font-family:monospace;color:var(--gold);display:inline-block;}
+.piva-missing{background:rgba(192,96,96,0.08);border:1px solid rgba(192,96,96,0.2);border-radius:6px;padding:2px 10px;font-size:12px;color:var(--red);display:inline-block;}
+.cf-card-border{border-left:3px solid var(--purple);}
+.tag-ricorrenza{display:inline-flex;align-items:center;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:500;}
+.tag-mensile{background:rgba(106,158,106,0.12);color:var(--green);border:1px solid rgba(106,158,106,0.25);}
+.tag-unatantum{background:rgba(106,138,176,0.12);color:var(--blue);border:1px solid rgba(106,138,176,0.25);}
+.tag-custom{background:rgba(201,169,110,0.12);color:var(--gold);border:1px solid rgba(201,169,110,0.25);}
+.cf-row{display:flex;align-items:flex-start;gap:14px;padding:14px 0;border-bottom:1px solid rgba(46,44,41,0.5);}
+.cf-row:last-child{border-bottom:none;}
+.iva-badge{display:inline-flex;align-items:center;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600;background:rgba(154,122,176,0.15);color:var(--purple);border:1px solid rgba(154,122,176,0.3);}
+.margine-box{background:linear-gradient(135deg,rgba(106,158,106,0.08),rgba(106,158,106,0.04));border:1px solid rgba(106,158,106,0.2);border-radius:var(--radius);padding:16px 20px;margin-top:16px;}
+.margine-box.negativo{background:linear-gradient(135deg,rgba(192,96,96,0.08),rgba(192,96,96,0.04));border-color:rgba(192,96,96,0.2);}
+.scad-row{display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid rgba(46,44,41,0.5);transition:var(--transition);}
+.scad-row:last-child{border-bottom:none;}
+.scad-row:hover{background:rgba(201,169,110,0.03);}
+.scad-day{min-width:44px;height:44px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:600;flex-shrink:0;}
+.scad-day .day-num{font-family:'Cormorant Garamond',serif;font-size:20px;line-height:1;}
+.scad-day .day-lab{font-size:9px;text-transform:uppercase;letter-spacing:0.08em;margin-top:1px;}
+.scad-day.urgente{background:rgba(192,96,96,0.15);color:var(--red);border:1px solid rgba(192,96,96,0.3);}
+.scad-day.vicino{background:rgba(201,169,110,0.12);color:var(--gold);border:1px solid rgba(201,169,110,0.3);}
+.scad-day.normale{background:rgba(154,122,176,0.1);color:var(--purple);border:1px solid rgba(154,122,176,0.25);}
+.scad-day.passato{background:rgba(90,86,80,0.15);color:var(--text-dim);border:1px solid rgba(90,86,80,0.3);}
+.urgency-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.urgency-dot.urgente{background:var(--red);}
+.urgency-dot.vicino{background:var(--gold);}
+.urgency-dot.normale{background:var(--purple);}
+.urgency-dot.passato{background:var(--text-dim);}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="brand">Pillole<br>Culinarie</div>
+      <div class="sub">Gestione Fatture</div>
+    </div>
+    <nav>
+      <div class="nav-section">
+        <div class="nav-label">Panoramica</div>
+        <div class="nav-item active" onclick="showView('dashboard')" id="nav-dashboard"><span class="nav-icon">◈</span> Dashboard</div>
+        <div class="nav-item" onclick="showView('calendario')" id="nav-calendario"><span class="nav-icon">◷</span> Calendario Mensile</div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Ricavi</div>
+        <div class="nav-item" onclick="showView('progetti')" id="nav-progetti"><span class="nav-icon">◻</span> Progetti</div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Costi</div>
+        <div class="nav-item" onclick="showView('professionisti')" id="nav-professionisti"><span class="nav-icon">◉</span> Professionisti</div>
+        <div class="nav-item" onclick="showView('costifissi')" id="nav-costifissi"><span class="nav-icon">◆</span> Costi Fissi</div>
+      </div>
+    </nav>
+  </aside>
+  <div class="main">
+
+    <!-- DASHBOARD -->
+    <div id="view-dashboard" class="view-section">
+      <div class="page-header">
+        <div class="page-title">Dashboard</div>
+        <div class="page-sub">Riepilogo finanziario completo</div>
+        <div class="header-actions">
+          <select id="dash-year" onchange="renderDashboard()" style="width:120px">
+            <option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option>
+          </select>
+        </div>
+      </div>
+      <div class="content">
+        <div class="grid-4" id="dash-stats" style="margin-bottom:20px"></div>
+        <div id="dash-margine-box" style="margin-bottom:12px"></div>
+        <div id="dash-iva-box" style="margin-bottom:20px"></div>
+        <div class="grid-2" style="margin-bottom:20px">
+          <div class="card"><div class="card-title">Top Clienti per Fatturato</div><div id="dash-clienti"></div></div>
+          <div class="card"><div class="card-title">Top Professionisti per Costi</div><div id="dash-professionisti-top"></div></div>
+        </div>
+        <div class="card" style="margin-bottom:20px"><div class="card-title">Fatturato Mensile</div><div id="dash-mensile"></div></div>
+        <div class="card"><div class="card-title">◆ Costi Fissi per Categoria</div><div id="dash-costifissi-list"></div></div>
+      </div>
+    </div>
+
+    <!-- CALENDARIO -->
+    <div id="view-calendario" class="view-section hidden">
+      <div class="page-header">
+        <div class="page-title">Calendario Mensile</div>
+        <div class="page-sub">Entrate e uscite complete mese per mese</div>
+        <div class="header-actions">
+          <select id="cal-year" onchange="renderCalendario()" style="width:120px">
+            <option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option>
+          </select>
+        </div>
+      </div>
+      <div class="content"><div class="month-bar" id="month-bar"></div><div id="cal-content"></div></div>
+    </div>
+
+    <!-- PROGETTI -->
+    <div id="view-progetti" class="view-section hidden">
+      <div class="page-header">
+        <div class="page-title">Progetti</div>
+        <div class="page-sub">Contratti con i clienti</div>
+        <div class="header-actions"><button class="btn btn-primary" onclick="openModalProgetto()">＋ Nuovo Progetto</button></div>
+      </div>
+      <div class="content"><div id="progetti-list"></div></div>
+    </div>
+
+    <!-- PROFESSIONISTI -->
+    <div id="view-professionisti" class="view-section hidden">
+      <div class="page-header">
+        <div class="page-title">Professionisti</div>
+        <div class="page-sub">Collaboratori e compensi</div>
+        <div class="header-actions"><button class="btn btn-primary" onclick="openModalProfessionista()">＋ Nuovo Professionista</button></div>
+      </div>
+      <div class="content"><div id="professionisti-list"></div></div>
+    </div>
+
+    <!-- COSTI FISSI -->
+    <div id="view-costifissi" class="view-section hidden">
+      <div class="page-header">
+        <div class="page-title">Costi Fissi Aziendali</div>
+        <div class="page-sub">Affitti, software, utenze, abbonamenti e altri costi strutturali</div>
+        <div class="header-actions">
+          <button class="btn btn-primary" onclick="openModalCostoFisso()">＋ Nuovo Costo Fisso</button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="grid-3" id="cf-stats" style="margin-bottom:20px"></div>
+        <div id="costifissi-list"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL PROGETTO -->
+<div class="modal-overlay hidden" id="modal-progetto">
+  <div class="modal">
+    <div class="modal-title" id="modal-progetto-title">Nuovo Progetto</div>
+    <div class="form-row">
+      <div class="form-group"><label>Nome Cliente *</label><input type="text" id="p-cliente" placeholder="es. Ristorante Pincopallino"></div>
+      <div class="form-group"><label>Servizio *</label><input type="text" id="p-servizio" placeholder="es. Comunicazione + Ufficio Stampa"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Tipo Contratto</label>
+        <select id="p-tipo" onchange="toggleTipo()">
+          <option value="ricorrente">Ricorrente (mensile)</option>
+          <option value="spot">Spot (scadenze personalizzate)</option>
+        </select>
+      </div>
+      <div class="form-group"><label id="p-importo-label">Importo / mese (€, escluso IVA)</label><input type="number" id="p-importo" placeholder="es. 1300"></div>
+    </div>
+    <div id="p-ricorrente-fields">
+      <div class="form-row">
+        <div class="form-group"><label>Mese Inizio</label>
+          <select id="p-mese-inizio"><option value="1">Gennaio</option><option value="2">Febbraio</option><option value="3">Marzo</option><option value="4">Aprile</option><option value="5">Maggio</option><option value="6">Giugno</option><option value="7">Luglio</option><option value="8">Agosto</option><option value="9">Settembre</option><option value="10">Ottobre</option><option value="11">Novembre</option><option value="12">Dicembre</option></select>
+        </div>
+        <div class="form-group"><label>Anno Inizio</label>
+          <select id="p-anno-inizio"><option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option></select>
+        </div>
+      </div>
+      <div class="form-group"><label>Durata (mesi)</label><input type="number" id="p-durata" placeholder="es. 6" min="1" style="max-width:160px"></div>
+    </div>
+    <div id="p-spot-fields" class="hidden">
+      <div class="section-title" style="margin-top:4px">Scadenze di Fatturazione</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Aggiungi ogni tranche: descrizione, importo e data di scadenza prevista.</div>
+      <div id="scadenze-list"></div>
+      <div class="sc-add-box">
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:10px;align-items:end">
+          <div><label>Descrizione tranche</label><input type="text" id="sc-desc" placeholder="es. 50% all'accettazione"></div>
+          <div><label>Importo (€)</label><input type="number" id="sc-importo" placeholder="1750"></div>
+          <div><label>Data scadenza</label><input type="date" id="sc-data"></div>
+          <div><button class="btn btn-ghost btn-sm" style="white-space:nowrap" onclick="addScadenza()">＋</button></div>
+        </div>
+      </div>
+    </div>
+    <hr class="divider">
+    <div class="section-title">Costi Operatori per questo Progetto</div>
+    <div id="costi-list"></div>
+    <div style="background:var(--bg);border:1px dashed var(--border);border-radius:8px;padding:12px;margin-top:8px">
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;margin-bottom:8px">
+        <div><label>Professionista</label><select id="new-prof-select"></select></div>
+        <div><label>Importo (€)</label><input type="number" id="new-prof-importo" placeholder="es. 200"></div>
+        <div><label>IVA %</label>
+          <select id="new-prof-iva">
+            <option value="22">22%</option>
+            <option value="0">0% (forfettario)</option>
+            <option value="10">10%</option>
+            <option value="4">4%</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:end">
+        <div><label>Tipo costo</label>
+          <select id="new-prof-tipo" onchange="toggleCostoTipo()">
+            <option value="mensile">Mensile (per tutta la durata)</option>
+            <option value="unatantum">Una tantum (mese specifico)</option>
+          </select>
+        </div>
+        <div id="new-prof-mese-group" style="display:none"><label>Mese</label>
+          <select id="new-prof-mese"><option value="1">Gennaio</option><option value="2">Febbraio</option><option value="3">Marzo</option><option value="4">Aprile</option><option value="5">Maggio</option><option value="6">Giugno</option><option value="7">Luglio</option><option value="8">Agosto</option><option value="9">Settembre</option><option value="10">Ottobre</option><option value="11">Novembre</option><option value="12">Dicembre</option></select>
+        </div>
+        <div id="new-prof-anno-group" style="display:none"><label>Anno</label>
+          <select id="new-prof-anno"><option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option></select>
+        </div>
+        <div style="grid-column:${1};"><button class="btn btn-ghost btn-sm" onclick="addCostoRow()" style="white-space:nowrap">＋ Aggiungi</button></div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--text-dim);margin-top:6px">Mensile: il costo si ripete ogni mese per tutta la durata del progetto. Una tantum: addebitato solo nel mese scelto.</div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModalProgetto()">Annulla</button>
+      <button class="btn btn-primary" onclick="saveProgetto()">Salva Progetto</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PROFESSIONISTA -->
+<div class="modal-overlay hidden" id="modal-professionista">
+  <div class="modal">
+    <div class="modal-title" id="modal-prof-title">Nuovo Professionista</div>
+    <div class="form-row">
+      <div class="form-group"><label>Nome *</label><input type="text" id="prof-nome" placeholder="es. Marco Rossi"></div>
+      <div class="form-group"><label>Ruolo *</label><input type="text" id="prof-ruolo" placeholder="es. Videomaker"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Partita IVA *</label><input type="text" id="prof-piva" placeholder="es. 12345678901" style="font-family:monospace;letter-spacing:0.05em"></div>
+      <div class="form-group"><label>Email (per invio recap)</label><input type="email" id="prof-email" placeholder="marco@email.com"></div>
+    </div>
+    <div class="form-group"><label>Telefono / Note</label><input type="text" id="prof-note" placeholder="es. +39 333 1234567"></div>
+    <hr class="divider">
+    <div class="section-title">Compenso Fisso Aziendale (non legato ai progetti)</div>
+    <div id="compensi-fissi-list"></div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Compensi mensili ricorrenti indipendenti dai progetti.</div>
+    <div class="sc-add-box">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:10px;align-items:end">
+        <div><label>€ / mese</label><input type="number" id="cf-importo" placeholder="800"></div>
+        <div><label>Mese inizio</label>
+          <select id="cf-mese-inizio"><option value="1">Gen</option><option value="2">Feb</option><option value="3">Mar</option><option value="4">Apr</option><option value="5">Mag</option><option value="6">Giu</option><option value="7">Lug</option><option value="8">Ago</option><option value="9">Set</option><option value="10">Ott</option><option value="11">Nov</option><option value="12">Dic</option></select>
+        </div>
+        <div><label>Anno</label>
+          <select id="cf-anno-inizio"><option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option></select>
+        </div>
+        <div><label>Durata (mesi)</label><input type="number" id="cf-durata" placeholder="12" min="1"></div>
+        <div><button class="btn btn-ghost btn-sm" onclick="addCompensoFisso()">＋</button></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModalProfessionista()">Annulla</button>
+      <button class="btn btn-primary" onclick="saveProfessionista()">Salva</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL COSTO FISSO -->
+<div class="modal-overlay hidden" id="modal-costofisso">
+  <div class="modal">
+    <div class="modal-title" id="modal-cf-title">Nuovo Costo Fisso</div>
+    <div class="form-row">
+      <div class="form-group"><label>Descrizione *</label><input type="text" id="cf2-desc" placeholder="es. Affitto ufficio, Adobe CC, Hosting..."></div>
+      <div class="form-group"><label>Categoria</label>
+        <select id="cf2-cat">
+          <option value="Ufficio & Sede">Ufficio &amp; Sede</option>
+          <option value="Software & Abbonamenti">Software &amp; Abbonamenti</option>
+          <option value="Utenze">Utenze</option>
+          <option value="Marketing & Comunicazione">Marketing &amp; Comunicazione</option>
+          <option value="Consulenze">Consulenze</option>
+          <option value="Attrezzatura">Attrezzatura</option>
+          <option value="Altro">Altro</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Importo (€, escluso IVA) *</label><input type="number" id="cf2-importo" placeholder="es. 1200"></div>
+      <div class="form-group">
+        <label>IVA %</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="cf2-iva-preset" onchange="applyIvaPreset()" style="flex:1">
+            <option value="22">22% (standard)</option>
+            <option value="10">10%</option>
+            <option value="4">4% (ridotta)</option>
+            <option value="0">0% (esente)</option>
+            <option value="custom">Personalizzata...</option>
+          </select>
+          <input type="number" id="cf2-iva-custom" placeholder="%" min="0" max="100" style="width:80px;flex:none" class="hidden">
+        </div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Fornitore / Note</label><input type="text" id="cf2-fornitore" placeholder="es. Adobe Inc., Proprietario via Roma 10..."></div>
+      <div class="form-group">
+        <label>Giorno di scadenza / pagamento nel mese</label>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input type="number" id="cf2-giorno" placeholder="es. 1, 15, 30" min="1" max="31" style="max-width:100px;flex:none">
+          <span style="font-size:12px;color:var(--text-dim)">del mese (lascia vuoto se non specifico)</span>
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider">
+    <div class="section-title">Ricorrenza</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Tipo di ricorrenza</label>
+        <select id="cf2-ricorrenza" onchange="toggleRicorrenza()">
+          <option value="mensile">Ogni mese</option>
+          <option value="unatantum">Una tantum (singola)</option>
+          <option value="custom">Personalizzata (es. trimestrale, annuale)</option>
+        </select>
+      </div>
+      <div class="form-group" id="cf2-custom-freq-group" style="display:none">
+        <label>Ogni quanti mesi</label>
+        <input type="number" id="cf2-ogni" placeholder="es. 3 = trimestrale, 12 = annuale" min="1">
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px" id="cf2-ricorrenza-hint">Il costo si ripete ogni mese per tutta la durata impostata.</div>
+
+    <div class="form-row">
+      <div class="form-group"><label>Mese inizio *</label>
+        <select id="cf2-mese-inizio"><option value="1">Gennaio</option><option value="2">Febbraio</option><option value="3">Marzo</option><option value="4">Aprile</option><option value="5">Maggio</option><option value="6">Giugno</option><option value="7">Luglio</option><option value="8">Agosto</option><option value="9">Settembre</option><option value="10">Ottobre</option><option value="11">Novembre</option><option value="12">Dicembre</option></select>
+      </div>
+      <div class="form-group"><label>Anno inizio *</label>
+        <select id="cf2-anno-inizio"><option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option></select>
+      </div>
+    </div>
+
+    <div id="cf2-durata-group">
+      <div class="form-group"><label>Durata totale (mesi) — lascia vuoto per indeterminato</label>
+        <input type="number" id="cf2-durata" placeholder="es. 12 per un anno, 36 per tre anni" min="1">
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModalCostoFisso()">Annulla</button>
+      <button class="btn btn-primary" onclick="saveCostoFisso()">Salva Costo Fisso</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EMAIL -->
+<div class="modal-overlay hidden" id="modal-email">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-title">✉ Anteprima Email — <span id="email-prof-nome"></span></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+      <span style="font-size:12px;color:var(--text-dim)">A:</span>
+      <span id="email-prof-addr" style="color:var(--blue);font-size:13px"></span>
+    </div>
+    <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-dim);margin-bottom:6px">Oggetto</div>
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px" id="email-oggetto"></div>
+    <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-dim);margin-bottom:6px">Corpo</div>
+    <div class="email-preview" id="email-body"></div>
+    <div style="font-size:11px;color:var(--text-dim);margin-top:10px">Cliccando "Apri in Mail" si aprirà il tuo client di posta con il messaggio già compilato.</div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModalEmail()">Chiudi</button>
+      <a class="btn btn-email" id="email-mailto-link" href="#">✉ Apri in Mail</a>
+    </div>
+  </div>
+</div>
+
+<script>
+const MESI=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+let state={progetti:[],professionisti:[],costiFissi:[],nextIdP:1,nextIdProf:1,nextIdCF:1};
+let editingProgettoId=null,editingProfId=null,editingCFId=null;
+let tempCosti=[],tempCompensi=[],tempScadenze=[];
+let selectedMonth=new Date().getMonth()+1;
+
+function saveState(){try{localStorage.setItem('pc_v3',JSON.stringify(state));}catch(e){}}
+function loadState(){try{const s=localStorage.getItem('pc_v3');if(s)state=JSON.parse(s);}catch(e){}}
+
+// ── NAVIGATION ────────────────────────────────────────────────
+function showView(v){
+  document.querySelectorAll('.view-section').forEach(el=>el.classList.add('hidden'));
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  document.getElementById('view-'+v).classList.remove('hidden');
+  document.getElementById('nav-'+v).classList.add('active');
+  if(v==='dashboard')renderDashboard();
+  if(v==='progetti')renderProgetti();
+  if(v==='professionisti')renderProfessionisti();
+  if(v==='calendario')renderCalendario();
+  if(v==='costifissi')renderCostiFissi();
+}
+
+// ── UTILS ─────────────────────────────────────────────────────
+function fmt(n){return'€ '+Number(n).toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fmtS(n){return'€ '+Number(n).toLocaleString('it-IT',{minimumFractionDigits:0,maximumFractionDigits:0});}
+function applyIva(n,pct){return n*(1+pct/100);}
+function fmtDate(s){if(!s)return'';const d=new Date(s+'T00:00:00');return d.toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'});}
+
+function getMesiProgetto(p){
+  if(p.tipo==='spot'){
+    if(!p.scadenze||p.scadenze.length===0)return[{anno:parseInt(p.annoInizio)||2026,mese:parseInt(p.meseInizio)||1}];
+    return p.scadenze.map(sc=>{if(!sc.data)return{anno:parseInt(p.annoInizio)||2026,mese:parseInt(p.meseInizio)||1};const d=new Date(sc.data+'T00:00:00');return{anno:d.getFullYear(),mese:d.getMonth()+1};});
+  }
+  let res=[],m=parseInt(p.meseInizio),a=parseInt(p.annoInizio),dur=parseInt(p.durata)||1;
+  for(let i=0;i<dur;i++){res.push({anno:a,mese:m});m++;if(m>12){m=1;a++;}}
+  return res;
+}
+function progettoAttivo(p,anno,mese){return getMesiProgetto(p).some(x=>x.anno==anno&&x.mese==mese);}
+function fatturatoCliente(p,anno,mese){
+  if(p.tipo==='spot'){
+    if(!p.scadenze||p.scadenze.length===0)return getMesiProgetto(p).some(x=>x.anno==anno&&x.mese==mese)?parseFloat(p.importo)||0:0;
+    return p.scadenze.filter(sc=>{if(!sc.data)return false;const d=new Date(sc.data+'T00:00:00');return d.getFullYear()==anno&&d.getMonth()+1==mese;}).reduce((a,sc)=>a+(parseFloat(sc.importo)||0),0);
+  }
+  if(!progettoAttivo(p,anno,mese))return 0;
+  return parseFloat(p.importo)||0;
+}
+function costoOperatoreMese(c,p,anno,mese){
+  // Per progetti spot: il costo si applica solo se il progetto è attivo in quel mese
+  if(c.tipo==='unatantum'){
+    // Una tantum: solo nel mese/anno specifico scelto
+    const cm=parseInt(c.mese)||parseInt(p.meseInizio)||1;
+    const ca=parseInt(c.anno)||parseInt(p.annoInizio)||2026;
+    return(anno==ca&&mese==cm)?parseFloat(c.importo)||0:0;
+  }
+  // Mensile: si applica ogni mese che il progetto è attivo
+  if(!progettoAttivo(p,anno,mese))return 0;
+  return parseFloat(c.importo)||0;
+}
+function costiProgettoMese(p,anno,mese){return(p.costi||[]).reduce((a,c)=>a+costoOperatoreMese(c,p,anno,mese),0);}
+function totaleProfMese(prof,anno,mese){
+  let tot=0;
+  state.progetti.forEach(p=>{(p.costi||[]).forEach(c=>{if(c.profId==prof.id)tot+=costoOperatoreMese(c,p,anno,mese);});});
+  return tot+compensiFissiMese(prof,anno,mese);
+}
+  let tot=0;
+  (prof.compensiFissi||[]).forEach(cf=>{let m=parseInt(cf.meseInizio),a=parseInt(cf.annoInizio),d=parseInt(cf.durata);for(let i=0;i<d;i++){if(a==anno&&m==mese){tot+=parseFloat(cf.importo)||0;break;}m++;if(m>12){m=1;a++;}}});
+  return tot;
+}
+function totaleProfMese(prof,anno,mese){
+  let tot=0;
+  state.progetti.forEach(p=>{if(progettoAttivo(p,anno,mese))(p.costi||[]).forEach(c=>{if(c.profId==prof.id)tot+=parseFloat(c.importo)||0;});});
+  return tot+compensiFissiMese(prof,anno,mese);
+}
+
+// Calcola costo fisso in un dato mese
+function costoFissoMese(cf,anno,mese){
+  const mI=parseInt(cf.meseInizio),aI=parseInt(cf.annoInizio);
+  const importo=parseFloat(cf.importo)||0;
+  const dur=cf.durata?parseInt(cf.durata):9999; // durata in mesi; 9999=indeterminato
+
+  // Calcola offset in mesi dall'inizio
+  const offsetMesi=(anno-aI)*12+(mese-mI);
+  if(offsetMesi<0)return 0; // prima dell'inizio
+
+  if(cf.ricorrenza==='mensile'){
+    // ogni mese per tutta la durata
+    if(offsetMesi>=dur)return 0;
+    return importo;
+  }
+  if(cf.ricorrenza==='unatantum'){
+    // solo nel mese di inizio
+    if(offsetMesi===0)return importo;
+    return 0;
+  }
+  if(cf.ricorrenza==='custom'){
+    const ogni=parseInt(cf.ogni)||1;
+    // cade ogni "ogni" mesi a partire dall'inizio
+    if(offsetMesi%ogni===0){
+      // verifica durata: numero di ricorrenze = Math.floor(dur/ogni)+1
+      const numRicorrenze=Math.floor((dur-1)/ogni)+1;
+      const nRicorrenza=offsetMesi/ogni;
+      if(nRicorrenza<numRicorrenze)return importo;
+    }
+    return 0;
+  }
+  return 0;
+}
+
+// Totale costi fissi in un mese (solo imponibile)
+function totaleCostiFissiMese(anno,mese){
+  return state.costiFissi.reduce((tot,cf)=>tot+costoFissoMese(cf,anno,mese),0);
+}
+// Con IVA
+function totaleCostiFissiMeseConIva(anno,mese){
+  return state.costiFissi.reduce((tot,cf)=>{
+    const imp=costoFissoMese(cf,anno,mese);
+    const iva=parseFloat(cf.iva)||0;
+    return tot+applyIva(imp,iva);
+  },0);
+}
+
+// Totale costi operatori mese (professionisti legati ai progetti + fissi)
+function totaleCostiOperatoriMese(anno,mese){
+  let tot=0;
+  state.professionisti.forEach(prof=>tot+=totaleProfMese(prof,anno,mese));
+  return tot;
+}
+
+// ── IVA ───────────────────────────────────────────────────────
+// IVA a debito: sulle fatture emesse ai clienti (22% fisso)
+function ivaDebito(anno,mese){
+  let tot=0;
+  state.progetti.forEach(p=>tot+=fatturatoCliente(p,anno,mese)*0.22);
+  return tot;
+}
+// IVA a credito: sui costi operatori + costi fissi (iva variabile per voce)
+function ivaCredito(anno,mese){
+  let tot=0;
+  // Da costi operatori di progetto
+  state.progetti.forEach(p=>{
+    (p.costi||[]).forEach(c=>{
+      const imp=costoOperatoreMese(c,p,anno,mese);
+      const iva=parseFloat(c.iva)||0;
+      tot+=imp*(iva/100);
+    });
+  });
+  // Da compensi fissi dei professionisti (iva non specificata → 0 se forfettari, altrimenti va aggiunta)
+  // I compensi fissi non hanno iva separata, usiamo 22% default solo se non forfettario
+  // Per ora non aggiungiamo IVA ai compensi fissi (sono fuori progetto)
+  // Da costi fissi aziendali
+  state.costiFissi.forEach(cf=>{
+    const imp=costoFissoMese(cf,anno,mese);
+    const iva=parseFloat(cf.iva)||0;
+    tot+=imp*(iva/100);
+  });
+  return tot;
+}
+function saldoIva(anno,mese){return ivaDebito(anno,mese)-ivaCredito(anno,mese);}
+function saldoIvaAnno(anno){
+  let deb=0,cred=0;
+  for(let m=1;m<=12;m++){deb+=ivaDebito(anno,m);cred+=ivaCredito(anno,m);}
+  return{debito:deb,credito:cred,saldo:deb-cred};
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────
+function renderDashboard(){
+  const anno=parseInt(document.getElementById('dash-year').value);
+  let totF=0,totCOp=0,totCF=0,byCliente={},byProf={},byMese=Array(12).fill(0);
+  state.progetti.forEach(p=>{for(let m=1;m<=12;m++){const f=fatturatoCliente(p,anno,m);totF+=f;byMese[m-1]+=f;if(f>0)byCliente[p.cliente]=(byCliente[p.cliente]||0)+f;}});
+  state.professionisti.forEach(prof=>{let t=0;for(let m=1;m<=12;m++)t+=totaleProfMese(prof,anno,m);totCOp+=t;if(t>0)byProf[prof.nome]=(byProf[prof.nome]||0)+t;});
+  for(let m=1;m<=12;m++)totCF+=totaleCostiFissiMese(anno,m);
+  const totCosti=totCOp+totCF;
+  const mg=totF-totCosti;
+  const iva=saldoIvaAnno(anno);
+
+  document.getElementById('dash-stats').innerHTML=`
+    <div class="stat-card gold"><div class="stat-label">Fatturato ${anno}</div><div class="stat-value">${fmtS(totF)}</div><div class="stat-note">+ IVA 22% ≈ ${fmtS(totF*1.22)}</div></div>
+    <div class="stat-card red"><div class="stat-label">Costi Operatori</div><div class="stat-value">${fmtS(totCOp)}</div><div class="stat-note">Professionisti e collaboratori</div></div>
+    <div class="stat-card purple"><div class="stat-label">Costi Fissi</div><div class="stat-value">${fmtS(totCF)}</div><div class="stat-note">${state.costiFissi.length} voci attive</div></div>
+    <div class="stat-card ${mg>=0?'green':'red'}"><div class="stat-label">Margine Netto</div><div class="stat-value">${fmtS(mg)}</div><div class="stat-note">${totF>0?Math.round(mg/totF*100):0}% del fatturato</div></div>`;
+
+  // Box IVA
+  const ivaBox=document.getElementById('dash-iva-box');
+  ivaBox.innerHTML=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+      <div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:500;color:var(--blue)">⚖ Saldo IVA ${anno}</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-top:2px">IVA a debito − IVA a credito = da versare (o credito)</div>
+      </div>
+      <div style="display:flex;gap:24px;font-size:13px;flex-wrap:wrap;align-items:center">
+        <span>Debito (su ricavi): <strong style="color:var(--red)">${fmtS(iva.debito)}</strong></span>
+        <span>Credito (su costi): <strong style="color:var(--green)">${fmtS(iva.credito)}</strong></span>
+        <span style="font-size:15px;font-weight:600;color:${iva.saldo>=0?'var(--red)':'var(--green)'}">
+          ${iva.saldo>=0?'Da versare':'Credito'}: ${fmtS(Math.abs(iva.saldo))}
+        </span>
+      </div>
+    </div>
+  </div>`;
+
+  // Margine breakdown box
+  const mgBox=document.getElementById('dash-margine-box');
+  mgBox.innerHTML=`<div class="${mg>=0?'margine-box':'margine-box negativo'}">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:500;color:${mg>=0?'var(--green)':'var(--red)'}">
+        ${mg>=0?'✓ Margine Positivo':'⚠ Margine Negativo'} – ${fmtS(mg)}
+      </div>
+      <div style="display:flex;gap:24px;font-size:12px;flex-wrap:wrap">
+        <span>Fatturato: <strong class="text-gold">${fmtS(totF)}</strong></span>
+        <span>− Operatori: <strong class="text-red">${fmtS(totCOp)}</strong></span>
+        <span>− Costi Fissi: <strong style="color:var(--purple)">${fmtS(totCF)}</strong></span>
+        <span>= <strong style="color:${mg>=0?'var(--green)':'var(--red)'}">${fmtS(mg)}</strong></span>
+      </div>
+    </div>
+  </div>`;
+
+  const sC=Object.entries(byCliente).sort((a,b)=>b[1]-a[1]).slice(0,6),mxC=sC[0]?.[1]||1;
+  document.getElementById('dash-clienti').innerHTML=sC.length===0?'<div class="text-muted" style="font-size:13px;padding:10px 0">Nessun cliente.</div>':sC.map(([n,v])=>`<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>${n}</span><span class="text-gold fw-500">${fmtS(v)}</span></div><div class="progress-bar"><div class="progress-fill" style="width:${v/mxC*100}%"></div></div></div>`).join('');
+  const sP=Object.entries(byProf).sort((a,b)=>b[1]-a[1]).slice(0,6),mxP=sP[0]?.[1]||1;
+  document.getElementById('dash-professionisti-top').innerHTML=sP.length===0?'<div class="text-muted" style="font-size:13px;padding:10px 0">Nessun costo.</div>':sP.map(([n,v])=>`<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>${n}</span><span class="text-red fw-500">${fmtS(v)}</span></div><div class="progress-bar"><div class="progress-fill red" style="width:${v/mxP*100}%"></div></div></div>`).join('');
+  const mxM=Math.max(...byMese,1);
+  document.getElementById('dash-mensile').innerHTML=`<div style="display:flex;gap:8px;align-items:flex-end;height:110px;padding-bottom:4px">${byMese.map((v,i)=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="font-size:10px;color:var(--text-dim)">${v>0?fmtS(v):''}</div><div style="width:100%;background:rgba(201,169,110,${v>0?'0.55':'0.08'});border-radius:3px 3px 0 0;height:${Math.max(v/mxM*72,2)}px"></div><div style="font-size:10px;color:var(--text-dim)">${MESI[i].slice(0,3)}</div></div>`).join('')}</div>`;
+
+  // Costi fissi per categoria
+  const byCat={};
+  state.costiFissi.forEach(cf=>{
+    let ann=0;for(let m=1;m<=12;m++)ann+=costoFissoMese(cf,anno,m);
+    if(ann>0)byCat[cf.categoria]=(byCat[cf.categoria]||0)+ann;
+  });
+  const sortedCat=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
+  const mxCat=sortedCat[0]?.[1]||1;
+  document.getElementById('dash-costifissi-list').innerHTML=sortedCat.length===0?'<div class="text-muted" style="font-size:13px;padding:10px 0">Nessun costo fisso per questo anno.</div>':sortedCat.map(([cat,v])=>`<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>${cat}</span><span style="color:var(--purple);font-weight:500">${fmtS(v)}</span></div><div class="progress-bar"><div class="progress-fill purple" style="width:${v/mxCat*100}%"></div></div></div>`).join('');
+}
+
+// ── CALENDARIO ─────────────────────────────────────────────────
+function renderCalendario(){
+  const anno=parseInt(document.getElementById('cal-year').value);
+  document.getElementById('month-bar').innerHTML=MESI.map((m,i)=>`<div class="month-chip ${selectedMonth===i+1?'active':''}" onclick="selectMonth(${i+1})">${m}</div>`).join('');
+  renderCalMese(anno,selectedMonth);
+}
+function selectMonth(m){selectedMonth=m;const anno=parseInt(document.getElementById('cal-year').value);document.querySelectorAll('.month-chip').forEach((el,i)=>el.classList.toggle('active',i+1===m));renderCalMese(anno,m);}
+
+function renderCalMese(anno,mese){
+  const el=document.getElementById('cal-content');
+  let righeClienti=[];
+  state.progetti.forEach(p=>{
+    const f=fatturatoCliente(p,anno,mese);if(f<=0)return;
+    if(p.tipo==='spot'&&p.scadenze&&p.scadenze.length>0){
+      p.scadenze.filter(sc=>{if(!sc.data)return false;const d=new Date(sc.data+'T00:00:00');return d.getFullYear()==anno&&d.getMonth()+1==mese;}).forEach(sc=>righeClienti.push({cliente:p.cliente,servizio:p.servizio,importo:parseFloat(sc.importo)||0,tipo:'spot',desc:sc.desc,data:sc.data}));
+    }else{righeClienti.push({cliente:p.cliente,servizio:p.servizio,importo:f,tipo:p.tipo,desc:'',data:''});}
+  });
+  let profMap={};
+  state.professionisti.forEach(prof=>{
+    let entries=[];
+    state.progetti.forEach(p=>{if(progettoAttivo(p,anno,mese))(p.costi||[]).forEach(c=>{if(c.profId==prof.id)entries.push({desc:`${p.cliente} – ${p.servizio}`,importo:parseFloat(c.importo)||0});});});
+    const fissi=compensiFissiMese(prof,anno,mese);
+    if(fissi>0)entries.push({desc:'Compenso fisso aziendale',importo:fissi,fisso:true});
+    if(entries.length>0)profMap[prof.id]={prof,entries};
+  });
+  // Costi fissi del mese
+  const cfMese=state.costiFissi.filter(cf=>costoFissoMese(cf,anno,mese)>0).map(cf=>({cf,importo:costoFissoMese(cf,anno,mese)}));
+
+  const totF=righeClienti.reduce((a,r)=>a+r.importo,0);
+  const totCOp=Object.values(profMap).reduce((a,x)=>a+x.entries.reduce((b,e)=>b+e.importo,0),0);
+  const totCF=cfMese.reduce((a,x)=>a+x.importo,0);
+  const totCosti=totCOp+totCF;
+  const mg=totF-totCosti;
+  const ivaDeb=ivaDebito(anno,mese);
+  const ivaCred=ivaCredito(anno,mese);
+  const ivaSaldo=ivaDeb-ivaCred;
+
+  el.innerHTML=`
+    <div class="grid-4" style="margin-bottom:12px">
+      <div class="stat-card gold"><div class="stat-label">Entrate – ${MESI[mese-1]}</div><div class="stat-value">${fmtS(totF)}</div><div class="stat-note">+ IVA ≈ ${fmtS(totF*1.22)}</div></div>
+      <div class="stat-card red"><div class="stat-label">Costi Operatori</div><div class="stat-value">${fmtS(totCOp)}</div><div class="stat-note">${Object.keys(profMap).length} professionista/i</div></div>
+      <div class="stat-card purple"><div class="stat-label">Costi Fissi</div><div class="stat-value">${fmtS(totCF)}</div><div class="stat-note">${cfMese.length} voci</div></div>
+      <div class="stat-card ${mg>=0?'green':'red'}"><div class="stat-label">Margine Netto</div><div class="stat-value">${fmtS(mg)}</div><div class="stat-note">${totF>0?Math.round(mg/totF*100):0}% del fatturato</div></div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 18px;margin-bottom:16px;display:flex;gap:24px;flex-wrap:wrap;align-items:center">
+      <span style="font-size:12px;font-weight:500;color:var(--blue)">⚖ IVA ${MESI[mese-1]}</span>
+      <span style="font-size:12px;color:var(--text-muted)">Debito: <strong style="color:var(--red)">${fmtS(ivaDeb)}</strong></span>
+      <span style="font-size:12px;color:var(--text-muted)">Credito: <strong style="color:var(--green)">${fmtS(ivaCred)}</strong></span>
+      <span style="font-size:13px;font-weight:600;color:${ivaSaldo>=0?'var(--red)':'var(--green)'}">
+        ${ivaSaldo>=0?'Da versare':'Credito'}: ${fmtS(Math.abs(ivaSaldo))}
+      </span>
+    </div>
+    <div class="grid-2" style="margin-bottom:16px">
+      <div class="card">
+        <div class="card-title">📤 Fatture da Emettere ai Clienti</div>
+        ${righeClienti.length===0?'<div class="text-muted" style="font-size:13px">Nessuna fattura questo mese.</div>':`
+        <div class="table-wrap"><table>
+          <thead><tr><th>Cliente</th><th>Servizio</th><th>Tipo</th><th>Scadenza</th><th class="text-right">Imponibile</th><th class="text-right">Con IVA 22%</th></tr></thead>
+          <tbody>
+            ${righeClienti.map(r=>`<tr><td class="fw-500">${r.cliente}</td><td class="text-muted">${r.servizio}${r.desc?'<br><span style="font-size:11px;color:var(--text-dim)">'+r.desc+'</span>':''}</td><td>${r.tipo==='spot'?'<span class="badge badge-blue">Spot</span>':'<span class="badge badge-gold">Mensile</span>'}</td><td style="font-size:12px;color:var(--text-muted)">${r.data?fmtDate(r.data):'—'}</td><td class="text-right text-gold">${fmt(r.importo)}</td><td class="text-right">${fmt(r.importo*1.22)}</td></tr>`).join('')}
+            <tr style="background:rgba(201,169,110,0.05)"><td colspan="4" class="fw-500">TOTALE</td><td class="text-right text-gold fw-500">${fmt(totF)}</td><td class="text-right fw-500">${fmt(totF*1.22)}</td></tr>
+          </tbody>
+        </table></div>`}
+      </div>
+      <div class="card">
+        <div class="card-title">📥 Fatture da Ricevere dai Professionisti</div>
+        ${Object.keys(profMap).length===0?'<div class="text-muted" style="font-size:13px">Nessun costo questo mese.</div>':
+          Object.values(profMap).map(({prof,entries})=>{
+            const tot=entries.reduce((a,e)=>a+e.importo,0);
+            return `<div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+                <div><div class="fw-500">${prof.nome} <span style="font-size:12px;color:var(--text-dim);font-weight:400">${prof.ruolo}</span></div>
+                ${prof.piva?`<span class="piva-tag" style="margin-top:4px">P.IVA ${prof.piva}</span>`:'<span class="piva-missing" style="margin-top:4px">⚠ P.IVA mancante</span>'}</div>
+                <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;margin-left:10px">
+                  <span class="badge badge-red">${fmt(tot)}</span>
+                  ${prof.email?`<button class="btn btn-email btn-sm" onclick="openEmailPreview(${prof.id},${anno},${mese})">✉ Email</button>`:''}
+                </div>
+              </div>
+              ${entries.map(e=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;color:var(--text-muted)"><span>${e.fisso?'🔒 ':''}${e.desc}</span><span>${fmt(e.importo)}</span></div>`).join('')}
+            </div>`;}).join('')}
+        ${Object.keys(profMap).length>0?`<div style="display:flex;justify-content:space-between;font-weight:500;padding-top:8px;border-top:1px solid var(--border)"><span>Totale Professionisti</span><span class="text-red">${fmt(totCOp)}</span></div>`:''}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">◆ Scadenze Costi Fissi – ${MESI[mese-1]}</div>
+      ${cfMese.length===0?'<div class="text-muted" style="font-size:13px">Nessuna scadenza questo mese.</div>':
+        (()=>{
+          const oggi=new Date();
+          const isCurrentMonth=(anno===oggi.getFullYear()&&mese===oggi.getMonth()+1);
+          const todayDay=oggi.getDate();
+          // Sort by giorno (null = fine mese)
+          const sorted=[...cfMese].sort((a,b)=>(a.cf.giorno||32)-(b.cf.giorno||32));
+          const rows=sorted.map(({cf,importo})=>{
+            const g=cf.giorno||null;
+            let urgClass='normale',urgLabel='',urgText='';
+            if(isCurrentMonth&&g){
+              const diff=g-todayDay;
+              if(diff<0){urgClass='passato';urgLabel='Pagato/passato';}
+              else if(diff===0){urgClass='urgente';urgLabel='OGGI';}
+              else if(diff<=3){urgClass='urgente';urgLabel=`fra ${diff}gg`;}
+              else if(diff<=7){urgClass='vicino';urgLabel=`fra ${diff}gg`;}
+              else{urgClass='normale';urgLabel=`${g} ${MESI[mese-1].slice(0,3)}`;}
+            } else if(g){
+              urgClass='normale';urgLabel=`${g} ${MESI[mese-1].slice(0,3)}`;
+            } else {
+              urgClass='normale';urgLabel='data aperta';
+            }
+            const iva=parseFloat(cf.iva)||0;
+            return `<div class="scad-row">
+              <div class="scad-day ${urgClass}">
+                <div class="day-num">${g||'—'}</div>
+                <div class="day-lab">${urgLabel&&!g?'aperta':MESI[mese-1].slice(0,3)}</div>
+              </div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                  <span class="fw-500">${cf.descrizione}</span>
+                  <span class="badge badge-purple" style="font-size:10px">${cf.categoria}</span>
+                  ${ricorrenzaLabel(cf)}
+                  ${urgLabel&&isCurrentMonth?`<span style="font-size:11px;font-weight:600;color:${urgClass==='urgente'?'var(--red)':urgClass==='vicino'?'var(--gold)':urgClass==='passato'?'var(--text-dim)':'var(--text-muted)'}">${urgLabel}</span>`:''}
+                </div>
+                <div style="font-size:12px;color:var(--text-dim);margin-top:3px">${cf.fornitore||''}</div>
+              </div>
+              <div style="text-align:right;flex-shrink:0">
+                <div style="color:var(--purple);font-weight:500">${fmt(importo)}</div>
+                <div style="font-size:11px;color:var(--text-dim)">+ IVA ${iva}% = ${fmt(applyIva(importo,iva))}</div>
+              </div>
+            </div>`;
+          }).join('');
+          const totIva=sorted.reduce(({imp,tot},{cf,importo})=>({imp:imp+importo,tot:tot+applyIva(importo,parseFloat(cf.iva)||0)}),{imp:0,tot:0});
+          return `<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">${rows}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding:10px 14px;background:rgba(154,122,176,0.06);border:1px solid rgba(154,122,176,0.15);border-radius:8px">
+            <div style="display:flex;gap:16px;font-size:12px;flex-wrap:wrap">
+              <span><span class="urgency-dot urgente" style="display:inline-block;margin-right:4px;vertical-align:middle"></span>Urgente / oggi</span>
+              <span><span class="urgency-dot vicino" style="display:inline-block;margin-right:4px;vertical-align:middle"></span>Entro 7 giorni</span>
+              <span><span class="urgency-dot normale" style="display:inline-block;margin-right:4px;vertical-align:middle"></span>In scadenza</span>
+              <span><span class="urgency-dot passato" style="display:inline-block;margin-right:4px;vertical-align:middle"></span>Già passato</span>
+            </div>
+            <div style="font-size:13px;font-weight:500">Totale imponibile: <span style="color:var(--purple)">${fmt(totIva.imp)}</span> &nbsp;·&nbsp; Con IVA: <span style="color:var(--text)">${fmt(totIva.tot)}</span></div>
+          </div>`;
+        })()
+      }
+      <div class="${mg>=0?'margine-box':'margine-box negativo'}" style="margin-top:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+          <span style="font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:500;color:${mg>=0?'var(--green)':'var(--red)'}">Margine Netto ${MESI[mese-1]}: ${fmtS(mg)}</span>
+          <span style="font-size:12px;color:var(--text-muted)">${fmtS(totF)} − ${fmtS(totCOp)} − ${fmtS(totCF)} = <strong style="color:${mg>=0?'var(--green)':'var(--red)'}">${fmtS(mg)}</strong></span>
+        </div>
+      </div>
+    </div>`;
+}
+
+function ricorrenzaLabel(cf){
+  if(cf.ricorrenza==='mensile')return'<span class="badge badge-green">Ogni mese</span>';
+  if(cf.ricorrenza==='unatantum')return'<span class="badge badge-blue">Una tantum</span>';
+  const ogni=cf.ogni||1;
+  if(ogni==3)return`<span class="badge badge-gold">Trimestrale</span>`;
+  if(ogni==6)return`<span class="badge badge-gold">Semestrale</span>`;
+  if(ogni==12)return`<span class="badge badge-gold">Annuale</span>`;
+  return`<span class="badge badge-gold">Ogni ${ogni} mesi</span>`;
+}
+
+// ── PROGETTI ──────────────────────────────────────────────────
+function renderProgetti(){
+  const el=document.getElementById('progetti-list');
+  if(state.progetti.length===0){el.innerHTML=`<div class="empty-state"><div class="icon">◻</div><p>Nessun progetto ancora.</p></div>`;return;}
+  el.innerHTML=state.progetti.map(p=>{
+    const mesi=getMesiProgetto(p);
+    let totFat,totCP;
+    if(p.tipo==='spot'){totFat=p.scadenze&&p.scadenze.length>0?p.scadenze.reduce((a,sc)=>a+(parseFloat(sc.importo)||0),0):parseFloat(p.importo)||0;totCP=(p.costi||[]).reduce((a,c)=>a+(parseFloat(c.importo)||0),0);}
+    else{totFat=mesi.length*(parseFloat(p.importo)||0);totCP=(p.costi||[]).reduce((a,c)=>a+(parseFloat(c.importo)||0)*mesi.length,0);}
+    const mg=totFat-totCP;
+    return `<div class="card" style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:12px">
+        <div><div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:500">${p.cliente}</div><div style="font-size:13px;color:var(--text-muted);margin-top:2px">${p.servizio}</div></div>
+        <div style="display:flex;gap:8px;align-items:center;flex-shrink:0">
+          ${p.tipo==='spot'?'<span class="badge badge-blue">Spot</span>':'<span class="badge badge-gold">Mensile</span>'}
+          <button class="btn btn-ghost btn-sm" onclick="editProgetto(${p.id})">✎</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteProgetto(${p.id})">✕</button>
+        </div>
+      </div>
+      <div class="grid-3" style="margin-bottom:14px">
+        <div><div class="stat-label">Importo${p.tipo==='ricorrente'?' / mese':' totale'}</div><div style="font-size:15px;font-weight:500;color:var(--gold);margin-top:4px">${fmt(p.tipo==='spot'?totFat:parseFloat(p.importo)||0)}</div></div>
+        <div><div class="stat-label">Durata</div><div style="font-size:15px;font-weight:500;margin-top:4px">${p.tipo==='spot'?((p.scadenze&&p.scadenze.length>0)?p.scadenze.length+' tranche':'1 fattura'):mesi.length+' mesi'}</div></div>
+        <div><div class="stat-label">Margine Progetto</div><div style="font-size:15px;font-weight:500;color:${mg>=0?'var(--green)':'var(--red)'};margin-top:4px">${fmt(mg)}</div><div style="font-size:11px;color:var(--text-dim)">Fat. ${fmt(totFat)} – Op. ${fmt(totCP)}</div></div>
+      </div>
+      ${p.tipo==='spot'&&p.scadenze&&p.scadenze.length>0?`<div style="margin-bottom:14px"><div class="section-title">Scadenze</div><div class="table-wrap"><table><thead><tr><th>Tranche</th><th>Importo</th><th>Con IVA 22%</th><th>Scadenza</th></tr></thead><tbody>${p.scadenze.map(sc=>`<tr><td>${sc.desc||'—'}</td><td class="text-gold">${fmt(parseFloat(sc.importo)||0)}</td><td>${fmt((parseFloat(sc.importo)||0)*1.22)}</td><td style="color:var(--text-muted)">${sc.data?fmtDate(sc.data):'—'}</td></tr>`).join('')}</tbody></table></div></div>`:''}
+      ${(p.costi||[]).length>0?`<div><div class="section-title">Costi Operatori</div><div class="pills-row">${(p.costi||[]).map(c=>{const pr=state.professionisti.find(x=>x.id==c.profId);return`<span class="pill">${pr?pr.nome:'N/D'}: ${fmt(parseFloat(c.importo))}${p.tipo==='ricorrente'?'/mese':' tot.'}</span>`;}).join('')}</div></div>`:''}
+    </div>`;}).join('');
+}
+
+// ── PROFESSIONISTI ────────────────────────────────────────────
+function renderProfessionisti(){
+  const el=document.getElementById('professionisti-list');
+  if(state.professionisti.length===0){el.innerHTML=`<div class="empty-state"><div class="icon">◉</div><p>Nessun professionista ancora.</p></div>`;return;}
+  const now=new Date(),tA=now.getFullYear(),tM=now.getMonth()+1;
+  el.innerHTML=state.professionisti.map(prof=>{
+    const pA=state.progetti.filter(p=>(p.costi||[]).some(c=>c.profId==prof.id));
+    const cfTot=(prof.compensiFissi||[]).reduce((a,cf)=>a+parseFloat(cf.importo)*parseInt(cf.durata),0);
+    const totMese=totaleProfMese(prof,tA,tM);
+    return `<div class="card" style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+            <span style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:500">${prof.nome}</span>
+            <span style="font-size:13px;color:var(--text-muted)">${prof.ruolo}</span>
+            ${prof.piva?`<span class="piva-tag">P.IVA ${prof.piva}</span>`:'<span class="piva-missing">⚠ P.IVA mancante</span>'}
+          </div>
+          ${prof.email||prof.note?`<div style="font-size:12px;color:var(--text-dim)">${prof.email?'✉ '+prof.email:''}${prof.email&&prof.note?' · ':''}${prof.note||''}</div>`:''}
+        </div>
+        <div style="display:flex;gap:8px;flex-shrink:0;margin-left:12px">
+          ${prof.email?`<button class="btn btn-email btn-sm" onclick="openEmailPreview(${prof.id},${tA},${tM})">✉ Recap ${MESI[tM-1]}</button>`:''}
+          <button class="btn btn-ghost btn-sm" onclick="editProfessionista(${prof.id})">✎</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteProfessionista(${prof.id})">✕</button>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div><div class="section-title">Progetti (${pA.length})</div>
+          ${pA.length===0?'<div class="text-muted" style="font-size:12px">Nessuno</div>':pA.map(p=>{const c=(p.costi||[]).find(x=>x.profId==prof.id);const dur=getMesiProgetto(p).length;return`<div style="font-size:12px;padding:5px 0;display:flex;justify-content:space-between;border-bottom:1px solid rgba(46,44,41,0.4)"><span>${p.cliente} – ${p.servizio}</span><span class="text-red">${fmt(parseFloat(c.importo))}${p.tipo==='ricorrente'?'/m×'+dur:' tot.'}</span></div>`;}).join('')}
+        </div>
+        <div><div class="section-title">Compensi Fissi${cfTot>0?' · tot. '+fmt(cfTot):''}</div>
+          ${(prof.compensiFissi||[]).length===0?'<div class="text-muted" style="font-size:12px">Nessuno</div>':(prof.compensiFissi||[]).map(cf=>`<div style="font-size:12px;padding:5px 0;display:flex;justify-content:space-between;border-bottom:1px solid rgba(46,44,41,0.4)"><span>${fmt(parseFloat(cf.importo))}/mese × ${cf.durata} mesi</span><span class="text-muted">da ${MESI[parseInt(cf.meseInizio)-1]} ${cf.annoInizio}</span></div>`).join('')}
+          ${totMese>0?`<div style="margin-top:10px;padding:8px 12px;background:rgba(201,169,110,0.06);border:1px solid rgba(201,169,110,0.15);border-radius:8px;display:flex;justify-content:space-between;font-size:13px"><span>Da fatturare questo mese</span><span class="text-gold fw-500">${fmt(totMese)}</span></div>`:''}
+        </div>
+      </div>
+    </div>`;}).join('');
+}
+
+// ── COSTI FISSI ───────────────────────────────────────────────
+function renderCostiFissi(){
+  const anno=new Date().getFullYear();
+  let totAnno=0,totMese=0;
+  const m=new Date().getMonth()+1;
+  state.costiFissi.forEach(cf=>{for(let mm=1;mm<=12;mm++)totAnno+=costoFissoMese(cf,anno,mm);totMese+=costoFissoMese(cf,anno,m);});
+
+  document.getElementById('cf-stats').innerHTML=`
+    <div class="stat-card purple"><div class="stat-label">Costi Fissi Annuali ${anno}</div><div class="stat-value">${fmtS(totAnno)}</div><div class="stat-note">${state.costiFissi.length} voci configurate</div></div>
+    <div class="stat-card red"><div class="stat-label">Costi Fissi – ${MESI[m-1]}</div><div class="stat-value">${fmtS(totMese)}</div><div class="stat-note">Mese corrente</div></div>
+    <div class="stat-card"><div class="stat-label">Media Mensile</div><div class="stat-value">${fmtS(totAnno/12)}</div><div class="stat-note">Media stimata</div></div>`;
+
+  if(state.costiFissi.length===0){document.getElementById('costifissi-list').innerHTML=`<div class="empty-state"><div class="icon">◆</div><p>Nessun costo fisso ancora.<br>Aggiungi affitti, software, utenze e altri costi strutturali.</p></div>`;return;}
+
+  // Raggruppa per categoria
+  const byCat={};
+  state.costiFissi.forEach(cf=>{if(!byCat[cf.categoria])byCat[cf.categoria]=[];byCat[cf.categoria].push(cf);});
+  let html='';
+  Object.entries(byCat).forEach(([cat,items])=>{
+    let catAnno=0;items.forEach(cf=>{for(let mm=1;mm<=12;mm++)catAnno+=costoFissoMese(cf,anno,mm);});
+    html+=`<div class="card cf-card-border" style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border)">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:500;color:var(--purple)">◆ ${cat}</div>
+        <span style="font-size:13px;color:var(--text-muted)">Annuo: <strong style="color:var(--purple)">${fmt(catAnno)}</strong></span>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Descrizione</th><th>Ricorrenza</th><th>IVA</th><th>Fornitore</th><th class="text-right">Importo</th><th class="text-right">Con IVA</th><th class="text-right">Totale Anno</th><th></th></tr></thead>
+        <tbody>
+          ${items.map(cf=>{
+            let cfAnno=0;for(let mm=1;mm<=12;mm++)cfAnno+=costoFissoMese(cf,anno,mm);
+            const iva=parseFloat(cf.iva)||0;
+            const importo=parseFloat(cf.importo)||0;
+            return`<tr>
+              <td><div class="fw-500">${cf.descrizione}</div><div style="font-size:11px;color:var(--text-dim);margin-top:2px">${cf.ricorrenza==='custom'?'Ogni '+cf.ogni+' mesi · ':''} da ${MESI[parseInt(cf.meseInizio)-1]} ${cf.annoInizio}${cf.durata?' · '+cf.durata+' mesi':' · senza scadenza'}</div></td>
+              <td>${ricorrenzaLabel(cf)}</td>
+              <td><span style="background:rgba(154,122,176,0.12);color:var(--purple);border:1px solid rgba(154,122,176,0.25);padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">${iva}%</span></td>
+              <td style="font-size:12px;color:var(--text-muted)">${cf.fornitore||'—'}</td>
+              <td class="text-right" style="color:var(--purple)">${fmt(importo)}</td>
+              <td class="text-right">${fmt(applyIva(importo,iva))}</td>
+              <td class="text-right fw-500">${fmt(cfAnno)}</td>
+              <td style="white-space:nowrap">
+                <button class="btn btn-ghost btn-sm" onclick="editCostoFisso(${cf.id})">✎</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteCostoFisso(${cf.id})">✕</button>
+              </td>
+            </tr>`;}).join('')}
+        </tbody>
+      </table></div>
+    </div>`;
+  });
+  document.getElementById('costifissi-list').innerHTML=html;
+}
+
+// ── MODAL COSTO FISSO ─────────────────────────────────────────
+function openModalCostoFisso(){
+  editingCFId=null;
+  document.getElementById('modal-cf-title').textContent='Nuovo Costo Fisso';
+  ['cf2-desc','cf2-importo','cf2-fornitore','cf2-ogni','cf2-durata','cf2-giorno'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('cf2-cat').value='Ufficio & Sede';
+  document.getElementById('cf2-iva-preset').value='22';
+  document.getElementById('cf2-iva-custom').classList.add('hidden');
+  document.getElementById('cf2-ricorrenza').value='mensile';
+  document.getElementById('cf2-mese-inizio').value=new Date().getMonth()+1;
+  document.getElementById('cf2-anno-inizio').value=new Date().getFullYear();
+  toggleRicorrenza();
+  document.getElementById('modal-costofisso').classList.remove('hidden');
+}
+function editCostoFisso(id){
+  const cf=state.costiFissi.find(x=>x.id===id);if(!cf)return;
+  editingCFId=id;
+  document.getElementById('modal-cf-title').textContent='Modifica Costo Fisso';
+  document.getElementById('cf2-desc').value=cf.descrizione;
+  document.getElementById('cf2-cat').value=cf.categoria;
+  document.getElementById('cf2-importo').value=cf.importo;
+  document.getElementById('cf2-fornitore').value=cf.fornitore||'';
+  // IVA
+  const ivaVal=parseFloat(cf.iva)||22;
+  const presets=[22,10,4,0];
+  if(presets.includes(ivaVal)){document.getElementById('cf2-iva-preset').value=String(ivaVal);document.getElementById('cf2-iva-custom').classList.add('hidden');}
+  else{document.getElementById('cf2-iva-preset').value='custom';document.getElementById('cf2-iva-custom').value=ivaVal;document.getElementById('cf2-iva-custom').classList.remove('hidden');}
+  document.getElementById('cf2-ricorrenza').value=cf.ricorrenza;
+  document.getElementById('cf2-mese-inizio').value=cf.meseInizio;
+  document.getElementById('cf2-anno-inizio').value=cf.annoInizio;
+  document.getElementById('cf2-ogni').value=cf.ogni||'';
+  document.getElementById('cf2-durata').value=cf.durata||'';
+  document.getElementById('cf2-giorno').value=cf.giorno||'';
+  toggleRicorrenza();
+  document.getElementById('modal-costofisso').classList.remove('hidden');
+}
+function closeModalCostoFisso(){document.getElementById('modal-costofisso').classList.add('hidden');}
+
+function applyIvaPreset(){
+  const v=document.getElementById('cf2-iva-preset').value;
+  document.getElementById('cf2-iva-custom').classList.toggle('hidden',v!=='custom');
+}
+function toggleRicorrenza(){
+  const r=document.getElementById('cf2-ricorrenza').value;
+  document.getElementById('cf2-custom-freq-group').style.display=r==='custom'?'block':'none';
+  const hints={mensile:'Il costo si ripete ogni mese per tutta la durata impostata.',unatantum:'Il costo si verifica una sola volta nel mese di inizio.',custom:'Il costo si ripete con la frequenza che imposti (es. ogni 3 mesi = trimestrale).'};
+  document.getElementById('cf2-ricorrenza-hint').textContent=hints[r]||'';
+  document.getElementById('cf2-durata-group').style.display=r==='unatantum'?'none':'block';
+}
+function saveCostoFisso(){
+  const desc=document.getElementById('cf2-desc').value.trim();
+  const importo=parseFloat(document.getElementById('cf2-importo').value);
+  if(!desc||!importo){alert('Compila descrizione e importo.');return;}
+  const ivaPreset=document.getElementById('cf2-iva-preset').value;
+  const iva=ivaPreset==='custom'?parseFloat(document.getElementById('cf2-iva-custom').value)||0:parseFloat(ivaPreset)||0;
+  const ricorrenza=document.getElementById('cf2-ricorrenza').value;
+  const obj={
+    id:editingCFId||state.nextIdCF++,
+    descrizione:desc,
+    categoria:document.getElementById('cf2-cat').value,
+    importo,iva,
+    fornitore:document.getElementById('cf2-fornitore').value.trim(),
+    ricorrenza,
+    ogni:ricorrenza==='custom'?parseInt(document.getElementById('cf2-ogni').value)||3:1,
+    meseInizio:parseInt(document.getElementById('cf2-mese-inizio').value)||1,
+    annoInizio:parseInt(document.getElementById('cf2-anno-inizio').value)||2026,
+    durata:ricorrenza==='unatantum'?1:(parseInt(document.getElementById('cf2-durata').value)||null),
+    giorno:parseInt(document.getElementById('cf2-giorno').value)||null
+  };
+  if(editingCFId)state.costiFissi[state.costiFissi.findIndex(x=>x.id===editingCFId)]=obj;
+  else state.costiFissi.push(obj);
+  saveState();closeModalCostoFisso();renderCostiFissi();
+}
+function deleteCostoFisso(id){if(!confirm('Eliminare questo costo fisso?'))return;state.costiFissi=state.costiFissi.filter(x=>x.id!==id);saveState();renderCostiFissi();}
+
+// ── MODAL PROGETTO ────────────────────────────────────────────
+function openModalProgetto(){editingProgettoId=null;tempCosti=[];tempScadenze=[];document.getElementById('modal-progetto-title').textContent='Nuovo Progetto';['p-cliente','p-servizio','p-importo','p-durata'].forEach(id=>document.getElementById(id).value='');document.getElementById('p-tipo').value='ricorrente';document.getElementById('p-mese-inizio').value='1';document.getElementById('p-anno-inizio').value='2026';toggleTipo();populateProfSelect();renderCostiList();renderScadenzeList();document.getElementById('modal-progetto').classList.remove('hidden');}
+function editProgetto(id){const p=state.progetti.find(x=>x.id===id);if(!p)return;editingProgettoId=id;tempCosti=(p.costi||[]).map(c=>({...c}));tempScadenze=(p.scadenze||[]).map(s=>({...s}));document.getElementById('modal-progetto-title').textContent='Modifica Progetto';document.getElementById('p-cliente').value=p.cliente;document.getElementById('p-servizio').value=p.servizio;document.getElementById('p-tipo').value=p.tipo;document.getElementById('p-importo').value=p.importo;document.getElementById('p-mese-inizio').value=p.meseInizio;document.getElementById('p-anno-inizio').value=p.annoInizio;document.getElementById('p-durata').value=p.durata;toggleTipo();populateProfSelect();renderCostiList();renderScadenzeList();document.getElementById('modal-progetto').classList.remove('hidden');}
+function closeModalProgetto(){document.getElementById('modal-progetto').classList.add('hidden');}
+function toggleTipo(){
+  const t=document.getElementById('p-tipo').value;
+  document.getElementById('p-ricorrente-fields').classList.toggle('hidden',t==='spot');
+  document.getElementById('p-spot-fields').classList.toggle('hidden',t==='ricorrente');
+  document.getElementById('p-importo-label').textContent=t==='ricorrente'?'Importo / mese (€, escluso IVA)':'Importo prima tranche (€) — oppure usa le scadenze sotto';
+}
+function toggleCostoTipo(){
+  const t=document.getElementById('new-prof-tipo').value;
+  document.getElementById('new-prof-mese-group').style.display=t==='unatantum'?'block':'none';
+  document.getElementById('new-prof-anno-group').style.display=t==='unatantum'?'block':'none';
+}
+function renderScadenzeList(){document.getElementById('scadenze-list').innerHTML=tempScadenze.length===0?'<div style="font-size:12px;color:var(--text-dim);margin-bottom:8px;padding:4px 0">Nessuna scadenza.</div>':tempScadenze.map((sc,i)=>`<div style="display:flex;gap:10px;align-items:center;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:6px"><span style="flex:1.5;font-size:13px">${sc.desc||'Tranche '+(i+1)}</span><span class="text-gold">${fmt(parseFloat(sc.importo)||0)}</span><span style="font-size:12px;color:var(--text-muted)">${sc.data?fmtDate(sc.data):'nessuna data'}</span><button class="delete-btn" onclick="removeScadenza(${i})">✕</button></div>`).join('');}
+function addScadenza(){const desc=document.getElementById('sc-desc').value.trim(),importo=parseFloat(document.getElementById('sc-importo').value),data=document.getElementById('sc-data').value;if(!importo){alert('Inserisci l\'importo.');return;}tempScadenze.push({desc,importo,data});document.getElementById('sc-desc').value='';document.getElementById('sc-importo').value='';document.getElementById('sc-data').value='';renderScadenzeList();}
+function removeScadenza(i){tempScadenze.splice(i,1);renderScadenzeList();}
+function populateProfSelect(){document.getElementById('new-prof-select').innerHTML='<option value="">-- Seleziona professionista --</option>'+state.professionisti.map(p=>`<option value="${p.id}">${p.nome} (${p.ruolo})</option>`).join('');}
+function renderCostiList(){
+  document.getElementById('costi-list').innerHTML=tempCosti.map((c,i)=>{
+    const pr=state.professionisti.find(p=>p.id==c.profId);
+    const tipoLabel=c.tipo==='unatantum'?`<span class="badge badge-blue" style="font-size:10px">Una tantum ${MESI[(parseInt(c.mese)||1)-1]} ${c.anno||2026}</span>`:`<span class="badge badge-green" style="font-size:10px">Mensile</span>`;
+    const ivaLabel=c.iva==0?'<span class="badge badge-gold" style="font-size:10px">Forfettario</span>':`<span style="font-size:11px;color:var(--text-dim)">IVA ${c.iva}%</span>`;
+    return`<div style="display:flex;gap:10px;align-items:center;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:6px;flex-wrap:wrap">
+      <span style="flex:1;font-size:13px;min-width:120px">${pr?pr.nome+' ('+pr.ruolo+')':'N/D'}</span>
+      <span class="text-red fw-500">${fmt(parseFloat(c.importo))}</span>
+      ${ivaLabel}${tipoLabel}
+      <button class="delete-btn" onclick="removeCosto(${i})">✕</button>
+    </div>`;
+  }).join('');
+}
+function addCostoRow(){
+  const profId=parseInt(document.getElementById('new-prof-select').value);
+  const importo=parseFloat(document.getElementById('new-prof-importo').value);
+  if(!profId||!importo){alert('Seleziona professionista e importo.');return;}
+  const iva=parseFloat(document.getElementById('new-prof-iva').value)||0;
+  const tipo=document.getElementById('new-prof-tipo').value;
+  const mese=parseInt(document.getElementById('new-prof-mese').value)||1;
+  const anno=parseInt(document.getElementById('new-prof-anno').value)||2026;
+  tempCosti.push({profId,importo,iva,tipo,mese,anno});
+  document.getElementById('new-prof-select').value='';
+  document.getElementById('new-prof-importo').value='';
+  document.getElementById('new-prof-tipo').value='mensile';
+  toggleCostoTipo();
+  renderCostiList();
+}
+function removeCosto(i){tempCosti.splice(i,1);renderCostiList();}
+function saveProgetto(){
+  const cliente=document.getElementById('p-cliente').value.trim(),servizio=document.getElementById('p-servizio').value.trim(),tipo=document.getElementById('p-tipo').value,importo=parseFloat(document.getElementById('p-importo').value);
+  if(!cliente||!servizio||!importo){alert('Compila i campi obbligatori.');return;}
+  let meseInizio=parseInt(document.getElementById('p-mese-inizio').value)||1,annoInizio=parseInt(document.getElementById('p-anno-inizio').value)||2026;
+  if(tipo==='spot'&&tempScadenze.length>0&&tempScadenze[0].data){const d=new Date(tempScadenze[0].data+'T00:00:00');meseInizio=d.getMonth()+1;annoInizio=d.getFullYear();}
+  const obj={id:editingProgettoId||state.nextIdP++,cliente,servizio,tipo,importo,meseInizio,annoInizio,durata:parseInt(document.getElementById('p-durata').value)||1,scadenze:tempScadenze,costi:tempCosti};
+  if(editingProgettoId)state.progetti[state.progetti.findIndex(x=>x.id===editingProgettoId)]=obj;else state.progetti.push(obj);
+  saveState();closeModalProgetto();renderProgetti();
+}
+function deleteProgetto(id){if(!confirm('Eliminare?'))return;state.progetti=state.progetti.filter(p=>p.id!==id);saveState();renderProgetti();}
+
+// ── MODAL PROFESSIONISTA ──────────────────────────────────────
+function openModalProfessionista(){editingProfId=null;tempCompensi=[];document.getElementById('modal-prof-title').textContent='Nuovo Professionista';['prof-nome','prof-ruolo','prof-email','prof-piva','prof-note'].forEach(id=>document.getElementById(id).value='');renderCompensiFissiList();document.getElementById('modal-professionista').classList.remove('hidden');}
+function editProfessionista(id){const prof=state.professionisti.find(x=>x.id===id);if(!prof)return;editingProfId=id;tempCompensi=(prof.compensiFissi||[]).map(c=>({...c}));document.getElementById('modal-prof-title').textContent='Modifica';document.getElementById('prof-nome').value=prof.nome;document.getElementById('prof-ruolo').value=prof.ruolo;document.getElementById('prof-email').value=prof.email||'';document.getElementById('prof-piva').value=prof.piva||'';document.getElementById('prof-note').value=prof.note||'';renderCompensiFissiList();document.getElementById('modal-professionista').classList.remove('hidden');}
+function closeModalProfessionista(){document.getElementById('modal-professionista').classList.add('hidden');}
+function renderCompensiFissiList(){document.getElementById('compensi-fissi-list').innerHTML=tempCompensi.map((c,i)=>`<div style="display:flex;gap:10px;align-items:center;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:6px"><span style="flex:1;font-size:13px">${fmt(parseFloat(c.importo))}/mese × ${c.durata} mesi</span><span class="text-muted" style="font-size:12px">da ${MESI[parseInt(c.meseInizio)-1]} ${c.annoInizio}</span><button class="delete-btn" onclick="removeCompenso(${i})">✕</button></div>`).join('');}
+function addCompensoFisso(){const importo=parseFloat(document.getElementById('cf-importo').value),meseInizio=document.getElementById('cf-mese-inizio').value,annoInizio=document.getElementById('cf-anno-inizio').value,durata=parseInt(document.getElementById('cf-durata').value)||12;if(!importo){alert('Inserisci l\'importo.');return;}tempCompensi.push({importo,meseInizio,annoInizio,durata});document.getElementById('cf-importo').value='';document.getElementById('cf-durata').value='';renderCompensiFissiList();}
+function removeCompenso(i){tempCompensi.splice(i,1);renderCompensiFissiList();}
+function saveProfessionista(){const nome=document.getElementById('prof-nome').value.trim(),ruolo=document.getElementById('prof-ruolo').value.trim();if(!nome||!ruolo){alert('Compila nome e ruolo.');return;}const obj={id:editingProfId||state.nextIdProf++,nome,ruolo,email:document.getElementById('prof-email').value.trim(),piva:document.getElementById('prof-piva').value.trim(),note:document.getElementById('prof-note').value.trim(),compensiFissi:tempCompensi};if(editingProfId)state.professionisti[state.professionisti.findIndex(x=>x.id===editingProfId)]=obj;else state.professionisti.push(obj);saveState();closeModalProfessionista();renderProfessionisti();}
+function deleteProfessionista(id){if(!confirm('Eliminare?'))return;state.professionisti=state.professionisti.filter(p=>p.id!==id);saveState();renderProfessionisti();}
+
+// ── EMAIL ─────────────────────────────────────────────────────
+function openEmailPreview(profId,anno,mese){
+  const prof=state.professionisti.find(p=>p.id==profId);if(!prof)return;
+  const entries=[];
+  state.progetti.forEach(p=>{if(progettoAttivo(p,anno,mese))(p.costi||[]).forEach(c=>{if(c.profId==profId)entries.push({desc:`${p.cliente} – ${p.servizio}`,importo:parseFloat(c.importo)||0});});});
+  const fissi=compensiFissiMese(prof,anno,mese);
+  if(fissi>0)entries.push({desc:'Compenso fisso aziendale',importo:fissi});
+  const totale=entries.reduce((a,e)=>a+e.importo,0);
+  const meseName=MESI[mese-1];
+  const oggetto=`Recap fatturazione ${meseName} ${anno} – Pillole Culinarie`;
+  let righe='';entries.forEach((e,i)=>{righe+=`  ${i+1}. ${e.desc}\n     Importo: ${fmt(e.importo)}\n\n`;});
+  const body=`Gentile ${prof.nome},\n\nti inviamo il riepilogo delle fatture da emettere per il mese di ${meseName} ${anno}.\n\n${'─'.repeat(44)}\nFATTURE DA EMETTERE A PILLOLE CULINARIE\n${'─'.repeat(44)}\n\n${righe}${'─'.repeat(44)}\nTOTALE DA FATTURARE: ${fmt(totale)}\n${'─'.repeat(44)}\n\nDati per la fatturazione:\n  Intestatario: Pillole Culinarie S.r.l.\n  P.IVA: [P.IVA Pillole Culinarie]\n\nI tuoi dati:\n  Nome: ${prof.nome}\n  P.IVA: ${prof.piva||'[inserire P.IVA]'}\n\nLa fattura dovrà essere emessa entro il mese di ${meseName} ${anno}.\n\nGrazie,\nPillole Culinarie`;
+  document.getElementById('email-prof-nome').textContent=prof.nome;
+  document.getElementById('email-prof-addr').textContent=prof.email;
+  document.getElementById('email-oggetto').textContent=oggetto;
+  document.getElementById('email-body').textContent=body;
+  document.getElementById('email-mailto-link').href=`mailto:${encodeURIComponent(prof.email)}?subject=${encodeURIComponent(oggetto)}&body=${encodeURIComponent(body)}`;
+  document.getElementById('modal-email').classList.remove('hidden');
+}
+function closeModalEmail(){document.getElementById('modal-email').classList.add('hidden');}
+
+// ── SAMPLE DATA ───────────────────────────────────────────────
+function loadSampleData(){
+  if(state.professionisti.length>0)return;
+  state.professionisti=[
+    {id:1,nome:'Marco Bianchi',ruolo:'Videomaker',email:'marco@email.it',piva:'12345678901',note:'+39 333 1234567',compensiFissi:[]},
+    {id:2,nome:'Sara Conti',ruolo:'Resp. Comunicazione',email:'sara@email.it',piva:'98765432100',note:'',compensiFissi:[{importo:800,meseInizio:'1',annoInizio:'2026',durata:12}]},
+    {id:3,nome:'Luca Ferri',ruolo:'Social Media Manager',email:'luca@email.it',piva:'11223344556',note:'',compensiFissi:[]},
+  ];
+  state.nextIdProf=4;
+  state.progetti=[
+    {id:1,cliente:'Ristorante Pincopallino',servizio:'Comunicazione + Ufficio Stampa',tipo:'ricorrente',importo:1300,meseInizio:1,annoInizio:2026,durata:6,scadenze:[],costi:[{profId:1,importo:200,iva:22,tipo:'mensile'},{profId:2,importo:100,iva:0,tipo:'mensile'}]},
+    {id:2,cliente:'Trattoria Da Nonna',servizio:'Social Media Management',tipo:'ricorrente',importo:800,meseInizio:2,annoInizio:2026,durata:12,scadenze:[],costi:[{profId:3,importo:250,iva:22,tipo:'mensile'}]},
+    {id:3,cliente:'Chef Academy Milano',servizio:'Campagna Lancio Corso Online',tipo:'spot',importo:3500,meseInizio:3,annoInizio:2026,durata:1,scadenze:[{desc:"50% all'accettazione",importo:1750,data:'2026-03-10'},{desc:'50% alla consegna',importo:1750,data:'2026-04-30'}],costi:[{profId:1,importo:800,iva:22,tipo:'unatantum',mese:3,anno:2026},{profId:3,importo:400,iva:0,tipo:'unatantum',mese:4,anno:2026}]},
+  ];
+  state.nextIdP=4;
+  state.costiFissi=[
+    {id:1,descrizione:'Affitto ufficio',categoria:'Ufficio & Sede',importo:1200,iva:22,fornitore:'Mario Proprietario',ricorrenza:'mensile',ogni:1,meseInizio:1,annoInizio:2026,durata:null,giorno:1},
+    {id:2,descrizione:'Adobe Creative Cloud',categoria:'Software & Abbonamenti',importo:85,iva:22,fornitore:'Adobe Inc.',ricorrenza:'mensile',ogni:1,meseInizio:1,annoInizio:2026,durata:null,giorno:15},
+    {id:3,descrizione:'Bolletta elettrica',categoria:'Utenze',importo:180,iva:10,fornitore:'Enel',ricorrenza:'mensile',ogni:1,meseInizio:1,annoInizio:2026,durata:null,giorno:20},
+    {id:4,descrizione:'Revisione contabile annuale',categoria:'Consulenze',importo:2500,iva:22,fornitore:'Studio Bianchi & Associati',ricorrenza:'unatantum',ogni:1,meseInizio:4,annoInizio:2026,durata:1,giorno:30},
+    {id:5,descrizione:'Hosting & Domini',categoria:'Software & Abbonamenti',importo:150,iva:22,fornitore:'Aruba',ricorrenza:'custom',ogni:12,meseInizio:1,annoInizio:2026,durata:36,giorno:1},
+    {id:6,descrizione:'Manutenzione stampante',categoria:'Attrezzatura',importo:120,iva:22,fornitore:'TechService',ricorrenza:'custom',ogni:3,meseInizio:3,annoInizio:2026,durata:12,giorno:null},
+  ];
+  state.nextIdCF=7;
+  saveState();
+}
+
+loadState();
+loadSampleData();
+selectedMonth=new Date().getMonth()+1;
+showView('dashboard');
+</script>
+</body>
+</html>
