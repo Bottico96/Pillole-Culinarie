@@ -109,6 +109,10 @@ textarea{resize:vertical;min-height:60px;}select option{background:var(--surface
 .urgency-dot.vicino{background:var(--gold);}
 .urgency-dot.normale{background:var(--purple);}
 .urgency-dot.passato{background:var(--text-dim);}
+.bu-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;border-top:3px solid var(--bu-color,var(--gold));}
+.bu-bar{height:6px;border-radius:3px;background:var(--border);overflow:hidden;margin-top:8px;}
+.bu-bar-fill{height:100%;border-radius:3px;background:var(--bu-color,var(--gold));}
+.bu-chip{display:inline-flex;align-items:center;padding:2px 10px;border-radius:12px;font-size:11px;font-weight:500;border:1px solid currentColor;opacity:0.85;}
 </style>
 </head>
 <body>
@@ -132,6 +136,10 @@ textarea{resize:vertical;min-height:60px;}select option{background:var(--surface
         <div class="nav-label">Costi</div>
         <div class="nav-item" onclick="showView('professionisti')" id="nav-professionisti"><span class="nav-icon">◉</span> Professionisti</div>
         <div class="nav-item" onclick="showView('costifissi')" id="nav-costifissi"><span class="nav-icon">◆</span> Costi Fissi</div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Impostazioni</div>
+        <div class="nav-item" onclick="showView('businessunit')" id="nav-businessunit"><span class="nav-icon">⬡</span> Business Unit</div>
       </div>
     </nav>
   </aside>
@@ -157,6 +165,7 @@ textarea{resize:vertical;min-height:60px;}select option{background:var(--surface
           <div class="card"><div class="card-title">Top Professionisti per Costi</div><div id="dash-professionisti-top"></div></div>
         </div>
         <div class="card" style="margin-bottom:20px"><div class="card-title">Fatturato Mensile</div><div id="dash-mensile"></div></div>
+        <div style="margin-bottom:20px"><div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:500;margin-bottom:14px">⬡ Business Unit</div><div id="dash-bu" class="grid-3"></div></div>
         <div class="card"><div class="card-title">◆ Costi Fissi per Categoria</div><div id="dash-costifissi-list"></div></div>
       </div>
     </div>
@@ -195,6 +204,16 @@ textarea{resize:vertical;min-height:60px;}select option{background:var(--surface
       <div class="content"><div id="professionisti-list"></div></div>
     </div>
 
+    <!-- BUSINESS UNIT (inline view) -->
+    <div id="view-businessunit" class="view-section hidden">
+      <div class="page-header">
+        <div class="page-title">Business Unit</div>
+        <div class="page-sub">Gestisci le aree di business dell'agenzia</div>
+        <div class="header-actions"><button class="btn btn-primary" onclick="openModalBU()">＋ Nuova Business Unit</button></div>
+      </div>
+      <div class="content"><div id="bu-list"></div></div>
+    </div>
+
     <!-- COSTI FISSI -->
     <div id="view-costifissi" class="view-section hidden">
       <div class="page-header">
@@ -210,6 +229,42 @@ textarea{resize:vertical;min-height:60px;}select option{background:var(--surface
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- VIEW BUSINESS UNIT -->
+<div id="view-businessunit" class="view-section hidden" style="display:none">
+  <div class="page-header">
+    <div class="page-title">Business Unit</div>
+    <div class="page-sub">Gestisci le aree di business dell'agenzia</div>
+    <div class="header-actions"><button class="btn btn-primary" onclick="openModalBU()">＋ Nuova Business Unit</button></div>
+  </div>
+  <div class="content"><div id="bu-list"></div></div>
+</div>
+
+<!-- MODAL BUSINESS UNIT -->
+<div class="modal-overlay hidden" id="modal-bu">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-title" id="modal-bu-title">Nuova Business Unit</div>
+    <div class="form-group"><label>Nome *</label><input type="text" id="bu-nome" placeholder="es. Comunicazione, Grafica, Social Media..."></div>
+    <div class="form-group"><label>Colore</label>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px" id="bu-colori">
+        <div onclick="selectBUColor('#c9a96e')" class="bu-color-opt" data-color="#c9a96e" style="width:28px;height:28px;border-radius:50%;background:#c9a96e;cursor:pointer;border:3px solid transparent"></div>
+        <div onclick="selectBUColor('#6a9e6a')" class="bu-color-opt" data-color="#6a9e6a" style="width:28px;height:28px;border-radius:50%;background:#6a9e6a;cursor:pointer;border:3px solid transparent"></div>
+        <div onclick="selectBUColor('#6a8ab0')" class="bu-color-opt" data-color="#6a8ab0" style="width:28px;height:28px;border-radius:50%;background:#6a8ab0;cursor:pointer;border:3px solid transparent"></div>
+        <div onclick="selectBUColor('#9a7ab0')" class="bu-color-opt" data-color="#9a7ab0" style="width:28px;height:28px;border-radius:50%;background:#9a7ab0;cursor:pointer;border:3px solid transparent"></div>
+        <div onclick="selectBUColor('#c06060')" class="bu-color-opt" data-color="#c06060" style="width:28px;height:28px;border-radius:50%;background:#c06060;cursor:pointer;border:3px solid transparent"></div>
+        <div onclick="selectBUColor('#7ab0a0')" class="bu-color-opt" data-color="#7ab0a0" style="width:28px;height:28px;border-radius:50%;background:#7ab0a0;cursor:pointer;border:3px solid transparent"></div>
+        <div onclick="selectBUColor('#b07a6a')" class="bu-color-opt" data-color="#b07a6a" style="width:28px;height:28px;border-radius:50%;background:#b07a6a;cursor:pointer;border:3px solid transparent"></div>
+        <div onclick="selectBUColor('#a0b06a')" class="bu-color-opt" data-color="#a0b06a" style="width:28px;height:28px;border-radius:50%;background:#a0b06a;cursor:pointer;border:3px solid transparent"></div>
+      </div>
+      <input type="hidden" id="bu-colore" value="#c9a96e">
+    </div>
+    <div class="form-group"><label>Descrizione (opzionale)</label><input type="text" id="bu-desc" placeholder="es. Gestione media, comunicati stampa..."></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModalBU()">Annulla</button>
+      <button class="btn btn-primary" onclick="saveBU()">Salva</button>
+    </div>
   </div>
 </div>
 
@@ -230,6 +285,19 @@ textarea{resize:vertical;min-height:60px;}select option{background:var(--surface
       </div>
       <div class="form-group"><label id="p-importo-label">Importo / mese (€, escluso IVA)</label><input type="number" id="p-importo" placeholder="es. 1300"></div>
     </div>
+    <hr class="divider" style="margin:12px 0">
+    <div class="section-title">Ripartizione per Business Unit</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Dividi l'importo del progetto tra le business unit coinvolte. La somma deve corrispondere all'importo totale.</div>
+    <div id="bu-split-list"></div>
+    <div class="sc-add-box" id="bu-split-add">
+      <div style="display:grid;grid-template-columns:2fr 1fr auto;gap:10px;align-items:end">
+        <div><label>Business Unit</label><select id="new-bu-select"></select></div>
+        <div><label>Importo (€)</label><input type="number" id="new-bu-importo" placeholder="es. 700"></div>
+        <div><button class="btn btn-ghost btn-sm" onclick="addBUSplit()">＋</button></div>
+      </div>
+    </div>
+    <div id="bu-split-totale" style="font-size:12px;color:var(--text-dim);margin-top:8px"></div>
+    <hr class="divider" style="margin:12px 0">
     <div id="p-ricorrente-fields">
       <div class="form-row">
         <div class="form-group"><label>Mese Inizio</label>
@@ -258,8 +326,9 @@ textarea{resize:vertical;min-height:60px;}select option{background:var(--surface
     <div class="section-title">Costi Operatori per questo Progetto</div>
     <div id="costi-list"></div>
     <div style="background:var(--bg);border:1px dashed var(--border);border-radius:8px;padding:12px;margin-top:8px">
-      <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;margin-bottom:8px">
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px;margin-bottom:8px">
         <div><label>Professionista</label><select id="new-prof-select"></select></div>
+        <div><label>Business Unit</label><select id="new-prof-bu"></select></div>
         <div><label>Importo (€)</label><input type="number" id="new-prof-importo" placeholder="es. 200"></div>
         <div><label>IVA %</label>
           <select id="new-prof-iva">
@@ -438,13 +507,192 @@ textarea{resize:vertical;min-height:60px;}select option{background:var(--surface
 
 <script>
 const MESI=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
-let state={progetti:[],professionisti:[],costiFissi:[],nextIdP:1,nextIdProf:1,nextIdCF:1};
-let editingProgettoId=null,editingProfId=null,editingCFId=null;
-let tempCosti=[],tempCompensi=[],tempScadenze=[];
+let state={progetti:[],professionisti:[],costiFissi:[],businessUnit:[],nextIdP:1,nextIdProf:1,nextIdCF:1,nextIdBU:1};
+let editingProgettoId=null,editingProfId=null,editingCFId=null,editingBUId=null;
+let tempCosti=[],tempCompensi=[],tempScadenze=[],tempBUSplit=[];
 let selectedMonth=new Date().getMonth()+1;
 
 function saveState(){try{localStorage.setItem('pc_v3',JSON.stringify(state));}catch(e){}}
 function loadState(){try{const s=localStorage.getItem('pc_v3');if(s)state=JSON.parse(s);}catch(e){}}
+
+
+// ── BUSINESS UNIT ─────────────────────────────────────────────
+const BU_COLORS=['#c9a96e','#6a9e6a','#6a8ab0','#9a7ab0','#c06060','#7ab0a0','#b07a6a','#a0b06a'];
+function getBU(id){return state.businessUnit.find(b=>b.id===id)||{nome:'N/D',colore:'#5a5650'};}
+
+function buFatturatoAnno(buId,anno){
+  let tot=0;
+  state.progetti.forEach(p=>{
+    (p.buSplit||[]).forEach(s=>{
+      if(s.buId===buId){
+        // Calcola quante volte ricorre nell'anno
+        for(let m=1;m<=12;m++){
+          if(fatturatoCliente(p,anno,m)>0){
+            // Per ricorrenti: importo BU per mese; per spot: proporzionale alla tranche
+            if(p.tipo==='ricorrente'){tot+=parseFloat(s.importo)||0;}
+            else{
+              // spot: quota proporzionale per ogni tranche nel mese
+              const totProgetto=(p.scadenze&&p.scadenze.length>0)?p.scadenze.reduce((a,sc)=>a+(parseFloat(sc.importo)||0),0):parseFloat(p.importo)||0;
+              const ratio=totProgetto>0?(parseFloat(s.importo)||0)/totProgetto:0;
+              tot+=fatturatoCliente(p,anno,m)*ratio;
+            }
+          }
+        }
+      }
+    });
+  });
+  return tot;
+}
+
+function buCostiAnno(buId,anno){
+  let tot=0;
+  state.progetti.forEach(p=>{
+    (p.costi||[]).forEach(c=>{
+      if(c.buId===buId){
+        for(let m=1;m<=12;m++) tot+=costoOperatoreMese(c,p,anno,m);
+      }
+    });
+  });
+  return tot;
+}
+
+function renderBusinessUnitDashboard(anno){
+  const el=document.getElementById('dash-bu');
+  if(!el)return;
+  if(state.businessUnit.length===0){el.innerHTML='<div class="text-muted" style="font-size:13px">Nessuna business unit. <a href="#" onclick="showView('businessunit')" style="color:var(--gold)">Aggiungine una →</a></div>';return;}
+  const maxFat=Math.max(...state.businessUnit.map(b=>buFatturatoAnno(b.id,anno)),1);
+  el.innerHTML=state.businessUnit.map(b=>{
+    const fat=buFatturatoAnno(b.id,anno);
+    const costi=buCostiAnno(b.id,anno);
+    const mg=fat-costi;
+    const pct=Math.round(fat/maxFat*100);
+    return `<div class="bu-card" style="--bu-color:${b.colore}">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <div style="width:10px;height:10px;border-radius:50%;background:${b.colore};flex-shrink:0"></div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:500">${b.nome}</div>
+      </div>
+      <div style="margin-bottom:6px">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-dim)">Fatturato</div>
+        <div style="font-size:22px;font-family:'Cormorant Garamond',serif;font-weight:500;color:${b.colore}">${fmtS(fat)}</div>
+      </div>
+      <div class="bu-bar"><div class="bu-bar-fill" style="width:${pct}%"></div></div>
+      <div style="display:flex;justify-content:space-between;margin-top:12px;font-size:12px;flex-wrap:wrap;gap:6px">
+        <span>Costi: <strong style="color:var(--red)">${fmtS(costi)}</strong></span>
+        <span>Margine: <strong style="color:${mg>=0?'var(--green)':'var(--red)'}">${fmtS(mg)}</strong></span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderBusinessUnit(){
+  const el=document.getElementById('bu-list');
+  if(state.businessUnit.length===0){
+    el.innerHTML=`<div class="empty-state"><div class="icon">⬡</div><p>Nessuna business unit.<br>Aggiungile qui per poi associarle ai progetti.</p></div>`;
+    return;
+  }
+  const anno=new Date().getFullYear();
+  el.innerHTML=`<div class="grid-3">${state.businessUnit.map(b=>{
+    const fat=buFatturatoAnno(b.id,anno);
+    const costi=buCostiAnno(b.id,anno);
+    const mg=fat-costi;
+    return`<div class="bu-card" style="--bu-color:${b.colore}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="width:12px;height:12px;border-radius:50%;background:${b.colore}"></div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:500">${b.nome}</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-ghost btn-sm" onclick="editBU(${b.id})">✎</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteBU(${b.id})">✕</button>
+        </div>
+      </div>
+      ${b.descrizione?`<div style="font-size:12px;color:var(--text-dim);margin-bottom:12px">${b.descrizione}</div>`:''}
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:12px">
+        <div><div style="color:var(--text-dim);font-size:10px;text-transform:uppercase;letter-spacing:0.08em">Fatturato</div><div style="color:${b.colore};font-weight:600;margin-top:2px">${fmtS(fat)}</div></div>
+        <div><div style="color:var(--text-dim);font-size:10px;text-transform:uppercase;letter-spacing:0.08em">Costi</div><div style="color:var(--red);font-weight:600;margin-top:2px">${fmtS(costi)}</div></div>
+        <div><div style="color:var(--text-dim);font-size:10px;text-transform:uppercase;letter-spacing:0.08em">Margine</div><div style="color:${mg>=0?'var(--green)':'var(--red)'};font-weight:600;margin-top:2px">${fmtS(mg)}</div></div>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function openModalBU(){
+  editingBUId=null;
+  document.getElementById('modal-bu-title').textContent='Nuova Business Unit';
+  document.getElementById('bu-nome').value='';
+  document.getElementById('bu-desc').value='';
+  document.getElementById('bu-colore').value=BU_COLORS[state.businessUnit.length%BU_COLORS.length];
+  selectBUColor(BU_COLORS[state.businessUnit.length%BU_COLORS.length]);
+  document.getElementById('modal-bu').classList.remove('hidden');
+}
+function editBU(id){
+  const b=state.businessUnit.find(x=>x.id===id);if(!b)return;
+  editingBUId=id;
+  document.getElementById('modal-bu-title').textContent='Modifica Business Unit';
+  document.getElementById('bu-nome').value=b.nome;
+  document.getElementById('bu-desc').value=b.descrizione||'';
+  document.getElementById('bu-colore').value=b.colore;
+  selectBUColor(b.colore);
+  document.getElementById('modal-bu').classList.remove('hidden');
+}
+function closeModalBU(){document.getElementById('modal-bu').classList.add('hidden');}
+function selectBUColor(c){
+  document.getElementById('bu-colore').value=c;
+  document.querySelectorAll('.bu-color-opt').forEach(el=>{
+    el.style.border=el.dataset.color===c?'3px solid white':'3px solid transparent';
+  });
+}
+function saveBU(){
+  const nome=document.getElementById('bu-nome').value.trim();
+  if(!nome){alert('Inserisci il nome.');return;}
+  const obj={id:editingBUId||state.nextIdBU++,nome,colore:document.getElementById('bu-colore').value||'#c9a96e',descrizione:document.getElementById('bu-desc').value.trim()};
+  if(editingBUId)state.businessUnit[state.businessUnit.findIndex(x=>x.id===editingBUId)]=obj;
+  else state.businessUnit.push(obj);
+  saveState();closeModalBU();renderBusinessUnit();
+  // Refresh BU selects
+  populateBUSelect();
+}
+function deleteBU(id){
+  if(!confirm('Eliminare questa business unit? Verrà rimossa anche da tutti i progetti.'))return;
+  state.businessUnit=state.businessUnit.filter(b=>b.id!==id);
+  state.progetti.forEach(p=>{p.buSplit=(p.buSplit||[]).filter(s=>s.buId!==id);(p.costi||[]).forEach(c=>{if(c.buId===id)delete c.buId;});});
+  saveState();renderBusinessUnit();
+}
+
+// BU split nel modal progetto
+function populateBUSelect(){
+  const opts='<option value="">-- Seleziona BU --</option>'+state.businessUnit.map(b=>`<option value="${b.id}">${b.nome}</option>`).join('');
+  const s1=document.getElementById('new-bu-select');if(s1)s1.innerHTML=opts;
+  const s2=document.getElementById('new-prof-bu');if(s2)s2.innerHTML=opts;
+}
+function renderBUSplitList(){
+  const el=document.getElementById('bu-split-list');if(!el)return;
+  el.innerHTML=tempBUSplit.map((s,i)=>{
+    const b=getBU(s.buId);
+    return`<div style="display:flex;gap:10px;align-items:center;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:6px">
+      <div style="width:8px;height:8px;border-radius:50%;background:${b.colore};flex-shrink:0"></div>
+      <span style="flex:1;font-size:13px">${b.nome}</span>
+      <span style="color:var(--gold);font-weight:500">${fmt(parseFloat(s.importo)||0)}</span>
+      <button class="delete-btn" onclick="removeBUSplit(${i})">✕</button>
+    </div>`;
+  }).join('');
+  // Mostra totale
+  const tot=tempBUSplit.reduce((a,s)=>a+(parseFloat(s.importo)||0),0);
+  const totEl=document.getElementById('bu-split-totale');
+  if(totEl) totEl.innerHTML=tot>0?`Totale ripartito: <strong style="color:var(--gold)">${fmt(tot)}</strong>`:'';
+}
+function addBUSplit(){
+  const buId=parseInt(document.getElementById('new-bu-select').value);
+  const importo=parseFloat(document.getElementById('new-bu-importo').value);
+  if(!buId||!importo){alert('Seleziona business unit e importo.');return;}
+  // Remove existing same BU
+  tempBUSplit=tempBUSplit.filter(s=>s.buId!==buId);
+  tempBUSplit.push({buId,importo});
+  document.getElementById('new-bu-select').value='';
+  document.getElementById('new-bu-importo').value='';
+  renderBUSplitList();
+}
+function removeBUSplit(i){tempBUSplit.splice(i,1);renderBUSplitList();}
 
 // ── NAVIGATION ────────────────────────────────────────────────
 function showView(v){
@@ -457,6 +705,7 @@ function showView(v){
   if(v==='professionisti')renderProfessionisti();
   if(v==='calendario')renderCalendario();
   if(v==='costifissi')renderCostiFissi();
+  if(v==='businessunit')renderBusinessUnit();
 }
 
 // ── UTILS ─────────────────────────────────────────────────────
@@ -666,6 +915,7 @@ function renderDashboard(){
   });
   const sortedCat=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
   const mxCat=sortedCat[0]?.[1]||1;
+  renderBusinessUnitDashboard(anno);
   document.getElementById('dash-costifissi-list').innerHTML=sortedCat.length===0?'<div class="text-muted" style="font-size:13px;padding:10px 0">Nessun costo fisso per questo anno.</div>':sortedCat.map(([cat,v])=>`<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>${cat}</span><span style="color:var(--purple);font-weight:500">${fmtS(v)}</span></div><div class="progress-bar"><div class="progress-fill purple" style="width:${v/mxCat*100}%"></div></div></div>`).join('');
 }
 
@@ -1023,8 +1273,8 @@ function saveCostoFisso(){
 function deleteCostoFisso(id){if(!confirm('Eliminare questo costo fisso?'))return;state.costiFissi=state.costiFissi.filter(x=>x.id!==id);saveState();renderCostiFissi();}
 
 // ── MODAL PROGETTO ────────────────────────────────────────────
-function openModalProgetto(){editingProgettoId=null;tempCosti=[];tempScadenze=[];document.getElementById('modal-progetto-title').textContent='Nuovo Progetto';['p-cliente','p-servizio','p-importo','p-durata'].forEach(id=>document.getElementById(id).value='');document.getElementById('p-tipo').value='ricorrente';document.getElementById('p-mese-inizio').value='1';document.getElementById('p-anno-inizio').value='2026';toggleTipo();populateProfSelect();renderCostiList();renderScadenzeList();document.getElementById('modal-progetto').classList.remove('hidden');}
-function editProgetto(id){const p=state.progetti.find(x=>x.id===id);if(!p)return;editingProgettoId=id;tempCosti=(p.costi||[]).map(c=>({...c}));tempScadenze=(p.scadenze||[]).map(s=>({...s}));document.getElementById('modal-progetto-title').textContent='Modifica Progetto';document.getElementById('p-cliente').value=p.cliente;document.getElementById('p-servizio').value=p.servizio;document.getElementById('p-tipo').value=p.tipo;document.getElementById('p-importo').value=p.importo;document.getElementById('p-mese-inizio').value=p.meseInizio;document.getElementById('p-anno-inizio').value=p.annoInizio;document.getElementById('p-durata').value=p.durata;toggleTipo();populateProfSelect();renderCostiList();renderScadenzeList();document.getElementById('modal-progetto').classList.remove('hidden');}
+function openModalProgetto(){editingProgettoId=null;tempCosti=[];tempScadenze=[];tempBUSplit=[];document.getElementById('modal-progetto-title').textContent='Nuovo Progetto';['p-cliente','p-servizio','p-importo','p-durata'].forEach(id=>document.getElementById(id).value='');document.getElementById('p-tipo').value='ricorrente';document.getElementById('p-mese-inizio').value='1';document.getElementById('p-anno-inizio').value='2026';toggleTipo();populateProfSelect();populateBUSelect();renderCostiList();renderScadenzeList();renderBUSplitList();document.getElementById('modal-progetto').classList.remove('hidden');}
+function editProgetto(id){const p=state.progetti.find(x=>x.id===id);if(!p)return;editingProgettoId=id;tempCosti=(p.costi||[]).map(c=>({...c}));tempScadenze=(p.scadenze||[]).map(s=>({...s}));tempBUSplit=(p.buSplit||[]).map(s=>({...s}));document.getElementById('modal-progetto-title').textContent='Modifica Progetto';document.getElementById('p-cliente').value=p.cliente;document.getElementById('p-servizio').value=p.servizio;document.getElementById('p-tipo').value=p.tipo;document.getElementById('p-importo').value=p.importo;document.getElementById('p-mese-inizio').value=p.meseInizio;document.getElementById('p-anno-inizio').value=p.annoInizio;document.getElementById('p-durata').value=p.durata;toggleTipo();populateProfSelect();populateBUSelect();renderCostiList();renderScadenzeList();renderBUSplitList();document.getElementById('modal-progetto').classList.remove('hidden');}
 function closeModalProgetto(){document.getElementById('modal-progetto').classList.add('hidden');}
 function toggleTipo(){
   const t=document.getElementById('p-tipo').value;
@@ -1044,12 +1294,14 @@ function populateProfSelect(){document.getElementById('new-prof-select').innerHT
 function renderCostiList(){
   document.getElementById('costi-list').innerHTML=tempCosti.map((c,i)=>{
     const pr=state.professionisti.find(p=>p.id==c.profId);
+    const bu=c.buId?getBU(c.buId):null;
     const tipoLabel=c.tipo==='unatantum'?`<span class="badge badge-blue" style="font-size:10px">Una tantum ${MESI[(parseInt(c.mese)||1)-1]} ${c.anno||2026}</span>`:`<span class="badge badge-green" style="font-size:10px">Mensile</span>`;
     const ivaLabel=c.iva==0?'<span class="badge badge-gold" style="font-size:10px">Forfettario</span>':`<span style="font-size:11px;color:var(--text-dim)">IVA ${c.iva}%</span>`;
+    const buLabel=bu?`<span class="bu-chip" style="color:${bu.colore};background:${bu.colore}22">${bu.nome}</span>`:'';
     return`<div style="display:flex;gap:10px;align-items:center;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:6px;flex-wrap:wrap">
       <span style="flex:1;font-size:13px;min-width:120px">${pr?pr.nome+' ('+pr.ruolo+')':'N/D'}</span>
       <span class="text-red fw-500">${fmt(parseFloat(c.importo))}</span>
-      ${ivaLabel}${tipoLabel}
+      ${ivaLabel}${tipoLabel}${buLabel}
       <button class="delete-btn" onclick="removeCosto(${i})">✕</button>
     </div>`;
   }).join('');
@@ -1062,9 +1314,11 @@ function addCostoRow(){
   const tipo=document.getElementById('new-prof-tipo').value;
   const mese=parseInt(document.getElementById('new-prof-mese').value)||1;
   const anno=parseInt(document.getElementById('new-prof-anno').value)||2026;
-  tempCosti.push({profId,importo,iva,tipo,mese,anno});
+  const buId=parseInt(document.getElementById('new-prof-bu').value)||null;
+  tempCosti.push({profId,importo,iva,tipo,mese,anno,buId});
   document.getElementById('new-prof-select').value='';
   document.getElementById('new-prof-importo').value='';
+  document.getElementById('new-prof-bu').value='';
   document.getElementById('new-prof-tipo').value='mensile';
   toggleCostoTipo();
   renderCostiList();
@@ -1075,7 +1329,7 @@ function saveProgetto(){
   if(!cliente||!servizio||!importo){alert('Compila i campi obbligatori.');return;}
   let meseInizio=parseInt(document.getElementById('p-mese-inizio').value)||1,annoInizio=parseInt(document.getElementById('p-anno-inizio').value)||2026;
   if(tipo==='spot'&&tempScadenze.length>0&&tempScadenze[0].data){const d=new Date(tempScadenze[0].data+'T00:00:00');meseInizio=d.getMonth()+1;annoInizio=d.getFullYear();}
-  const obj={id:editingProgettoId||state.nextIdP++,cliente,servizio,tipo,importo,meseInizio,annoInizio,durata:parseInt(document.getElementById('p-durata').value)||1,scadenze:tempScadenze,costi:tempCosti};
+  const obj={id:editingProgettoId||state.nextIdP++,cliente,servizio,tipo,importo,meseInizio,annoInizio,durata:parseInt(document.getElementById('p-durata').value)||1,scadenze:tempScadenze,costi:tempCosti,buSplit:tempBUSplit};
   if(editingProgettoId)state.progetti[state.progetti.findIndex(x=>x.id===editingProgettoId)]=obj;else state.progetti.push(obj);
   saveState();closeModalProgetto();renderProgetti();
 }
@@ -1114,6 +1368,17 @@ function closeModalEmail(){document.getElementById('modal-email').classList.add(
 
 // ── SAMPLE DATA ───────────────────────────────────────────────
 function loadSampleData(){
+  if(state.professionisti.length>0&&state.businessUnit.length>0)return;
+  // Init BU if missing
+  if(state.businessUnit.length===0){
+    state.businessUnit=[
+      {id:1,nome:'Comunicazione',colore:'#c9a96e',descrizione:'Ufficio stampa e PR'},
+      {id:2,nome:'Social Media',colore:'#6a8ab0',descrizione:'Gestione canali social'},
+      {id:3,nome:'Grafica & Video',colore:'#9a7ab0',descrizione:'Produzione visiva e video'},
+    ];
+    state.nextIdBU=4;
+    saveState();
+  }
   if(state.professionisti.length>0)return;
   state.professionisti=[
     {id:1,nome:'Marco Bianchi',ruolo:'Videomaker',email:'marco@email.it',piva:'12345678901',note:'+39 333 1234567',compensiFissi:[]},
@@ -1122,9 +1387,9 @@ function loadSampleData(){
   ];
   state.nextIdProf=4;
   state.progetti=[
-    {id:1,cliente:'Ristorante Pincopallino',servizio:'Comunicazione + Ufficio Stampa',tipo:'ricorrente',importo:1300,meseInizio:1,annoInizio:2026,durata:6,scadenze:[],costi:[{profId:1,importo:200,iva:22,tipo:'mensile'},{profId:2,importo:100,iva:0,tipo:'mensile'}]},
-    {id:2,cliente:'Trattoria Da Nonna',servizio:'Social Media Management',tipo:'ricorrente',importo:800,meseInizio:2,annoInizio:2026,durata:12,scadenze:[],costi:[{profId:3,importo:250,iva:22,tipo:'mensile'}]},
-    {id:3,cliente:'Chef Academy Milano',servizio:'Campagna Lancio Corso Online',tipo:'spot',importo:3500,meseInizio:3,annoInizio:2026,durata:1,scadenze:[{desc:"50% all'accettazione",importo:1750,data:'2026-03-10'},{desc:'50% alla consegna',importo:1750,data:'2026-04-30'}],costi:[{profId:1,importo:800,iva:22,tipo:'unatantum',mese:3,anno:2026},{profId:3,importo:400,iva:0,tipo:'unatantum',mese:4,anno:2026}]},
+    {id:1,cliente:'Ristorante Pincopallino',servizio:'Comunicazione + Ufficio Stampa',tipo:'ricorrente',importo:1300,meseInizio:1,annoInizio:2026,durata:6,scadenze:[],buSplit:[{buId:1,importo:900},{buId:3,importo:400}],costi:[{profId:1,importo:200,iva:22,tipo:'mensile',buId:3},{profId:2,importo:100,iva:0,tipo:'mensile',buId:1}]},
+    {id:2,cliente:'Trattoria Da Nonna',servizio:'Social Media Management',tipo:'ricorrente',importo:800,meseInizio:2,annoInizio:2026,durata:12,scadenze:[],buSplit:[{buId:2,importo:800}],costi:[{profId:3,importo:250,iva:22,tipo:'mensile',buId:2}]},
+    {id:3,cliente:'Chef Academy Milano',servizio:'Campagna Lancio Corso Online',tipo:'spot',importo:3500,meseInizio:3,annoInizio:2026,durata:1,scadenze:[{desc:"50% all'accettazione",importo:1750,data:'2026-03-10'},{desc:'50% alla consegna',importo:1750,data:'2026-04-30'}],buSplit:[{buId:3,importo:2000},{buId:1,importo:1500}],costi:[{profId:1,importo:800,iva:22,tipo:'unatantum',mese:3,anno:2026,buId:3},{profId:3,importo:400,iva:0,tipo:'unatantum',mese:4,anno:2026,buId:1}]},
   ];
   state.nextIdP=4;
   state.costiFissi=[
