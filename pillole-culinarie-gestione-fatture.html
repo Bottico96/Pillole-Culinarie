@@ -157,7 +157,7 @@ textarea{resize:vertical;min-height:60px;}select option{background:var(--surface
         </div>
       </div>
       <div class="content">
-        <div class="grid-4" id="dash-stats" style="margin-bottom:20px"></div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px" id="dash-stats" style="margin-bottom:20px"></div>
         <div id="dash-margine-box" style="margin-bottom:12px"></div>
         <div id="dash-iva-box" style="margin-bottom:20px"></div>
         <div class="grid-2" style="margin-bottom:20px">
@@ -233,7 +233,7 @@ textarea{resize:vertical;min-height:60px;}select option{background:var(--surface
 </div>
 
 <!-- VIEW BUSINESS UNIT -->
-<div id="view-businessunit" class="view-section hidden" style="display:none">
+<div id="view-businessunit" class="view-section hidden">
   <div class="page-header">
     <div class="page-title">Business Unit</div>
     <div class="page-sub">Gestisci le aree di business dell'agenzia</div>
@@ -509,7 +509,7 @@ textarea{resize:vertical;min-height:60px;}select option{background:var(--surface
 const MESI=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
 let state={progetti:[],professionisti:[],costiFissi:[],businessUnit:[],nextIdP:1,nextIdProf:1,nextIdCF:1,nextIdBU:1};
 let editingProgettoId=null,editingProfId=null,editingCFId=null,editingBUId=null;
-let tempCosti=[],tempCompensi=[],tempScadenze=[],tempBUSplit=[];
+let tempCosti=[],tempCompensi=[],tempScadenze=[],tempBUSplit=[];let editingCostoIdx=null;
 let selectedMonth=new Date().getMonth()+1;
 
 function saveState(){try{localStorage.setItem('pc_v3',JSON.stringify(state));}catch(e){}}
@@ -578,7 +578,7 @@ function renderBusinessUnitDashboard(anno){
       <div class="bu-bar"><div class="bu-bar-fill" style="width:${pct}%"></div></div>
       <div style="display:flex;justify-content:space-between;margin-top:12px;font-size:12px;flex-wrap:wrap;gap:6px">
         <span>Costi: <strong style="color:var(--red)">${fmtS(costi)}</strong></span>
-        <span>Margine: <strong style="color:${mg>=0?'var(--green)':'var(--red)'}">${fmtS(mg)}</strong></span>
+        <span>Margine: <strong style="color:${mg>=0?'var(--green)':'var(--red)'}">${fmtS(mg)} (${fat>0?Math.round(mg/fat*100):0}%)</strong></span>
       </div>
     </div>`;
   }).join('');
@@ -864,7 +864,8 @@ function renderDashboard(){
     <div class="stat-card gold"><div class="stat-label">Fatturato ${anno}</div><div class="stat-value">${fmtS(totF)}</div><div class="stat-note">+ IVA 22% ≈ ${fmtS(totF*1.22)}</div></div>
     <div class="stat-card red"><div class="stat-label">Costi Operatori</div><div class="stat-value">${fmtS(totCOp)}</div><div class="stat-note">Professionisti e collaboratori</div></div>
     <div class="stat-card purple"><div class="stat-label">Costi Fissi</div><div class="stat-value">${fmtS(totCF)}</div><div class="stat-note">${state.costiFissi.length} voci attive</div></div>
-    <div class="stat-card ${mg>=0?'green':'red'}"><div class="stat-label">Margine Netto</div><div class="stat-value">${fmtS(mg)}</div><div class="stat-note">${totF>0?Math.round(mg/totF*100):0}% del fatturato</div></div>`;
+    <div class="stat-card ${mg>=0?'green':'red'}"><div class="stat-label">Margine Netto</div><div class="stat-value">${fmtS(mg)}</div><div class="stat-note">${totF>0?Math.round(mg/totF*100):0}% del fatturato</div></div>
+    <div class="stat-card ${mg>=0?'green':'red'}"><div class="stat-label">Margine %</div><div class="stat-value">${totF>0?Math.round(mg/totF*100):0}%</div><div class="stat-note">Sul fatturato lordo</div></div>`;
 
   // Box IVA
   const ivaBox=document.getElementById('dash-iva-box');
@@ -889,7 +890,7 @@ function renderDashboard(){
   mgBox.innerHTML=`<div class="${mg>=0?'margine-box':'margine-box negativo'}">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px">
       <div style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:500;color:${mg>=0?'var(--green)':'var(--red)'}">
-        ${mg>=0?'✓ Margine Positivo':'⚠ Margine Negativo'} – ${fmtS(mg)}
+        ${mg>=0?'✓ Margine Positivo':'⚠ Margine Negativo'} – ${fmtS(mg)} <span style="font-size:13px;opacity:0.8">(${totF>0?Math.round(mg/totF*100):0}%)</span>
       </div>
       <div style="display:flex;gap:24px;font-size:12px;flex-wrap:wrap">
         <span>Fatturato: <strong class="text-gold">${fmtS(totF)}</strong></span>
@@ -961,7 +962,7 @@ function renderCalMese(anno,mese){
       <div class="stat-card gold"><div class="stat-label">Entrate – ${MESI[mese-1]}</div><div class="stat-value">${fmtS(totF)}</div><div class="stat-note">+ IVA ≈ ${fmtS(totF*1.22)}</div></div>
       <div class="stat-card red"><div class="stat-label">Costi Operatori</div><div class="stat-value">${fmtS(totCOp)}</div><div class="stat-note">${Object.keys(profMap).length} professionista/i</div></div>
       <div class="stat-card purple"><div class="stat-label">Costi Fissi</div><div class="stat-value">${fmtS(totCF)}</div><div class="stat-note">${cfMese.length} voci</div></div>
-      <div class="stat-card ${mg>=0?'green':'red'}"><div class="stat-label">Margine Netto</div><div class="stat-value">${fmtS(mg)}</div><div class="stat-note">${totF>0?Math.round(mg/totF*100):0}% del fatturato</div></div>
+      <div class="stat-card ${mg>=0?'green':'red'}"><div class="stat-label">Margine Netto</div><div class="stat-value">${fmtS(mg)} <span style="font-size:14px">(${totF>0?Math.round(mg/totF*100):0}%)</span></div><div class="stat-note">Sul fatturato del mese</div></div>
     </div>
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 18px;margin-bottom:16px;display:flex;gap:24px;flex-wrap:wrap;align-items:center">
       <span style="font-size:12px;font-weight:500;color:var(--blue)">⚖ IVA ${MESI[mese-1]}</span>
@@ -1273,8 +1274,8 @@ function saveCostoFisso(){
 function deleteCostoFisso(id){if(!confirm('Eliminare questo costo fisso?'))return;state.costiFissi=state.costiFissi.filter(x=>x.id!==id);saveState();renderCostiFissi();}
 
 // ── MODAL PROGETTO ────────────────────────────────────────────
-function openModalProgetto(){editingProgettoId=null;tempCosti=[];tempScadenze=[];tempBUSplit=[];document.getElementById('modal-progetto-title').textContent='Nuovo Progetto';['p-cliente','p-servizio','p-importo','p-durata'].forEach(id=>document.getElementById(id).value='');document.getElementById('p-tipo').value='ricorrente';document.getElementById('p-mese-inizio').value='1';document.getElementById('p-anno-inizio').value='2026';toggleTipo();populateProfSelect();populateBUSelect();renderCostiList();renderScadenzeList();renderBUSplitList();document.getElementById('modal-progetto').classList.remove('hidden');}
-function editProgetto(id){const p=state.progetti.find(x=>x.id===id);if(!p)return;editingProgettoId=id;tempCosti=(p.costi||[]).map(c=>({...c}));tempScadenze=(p.scadenze||[]).map(s=>({...s}));tempBUSplit=(p.buSplit||[]).map(s=>({...s}));document.getElementById('modal-progetto-title').textContent='Modifica Progetto';document.getElementById('p-cliente').value=p.cliente;document.getElementById('p-servizio').value=p.servizio;document.getElementById('p-tipo').value=p.tipo;document.getElementById('p-importo').value=p.importo;document.getElementById('p-mese-inizio').value=p.meseInizio;document.getElementById('p-anno-inizio').value=p.annoInizio;document.getElementById('p-durata').value=p.durata;toggleTipo();populateProfSelect();populateBUSelect();renderCostiList();renderScadenzeList();renderBUSplitList();document.getElementById('modal-progetto').classList.remove('hidden');}
+function openModalProgetto(){editingProgettoId=null;tempCosti=[];tempScadenze=[];tempBUSplit=[];editingCostoIdx=null;document.getElementById('modal-progetto-title').textContent='Nuovo Progetto';['p-cliente','p-servizio','p-importo','p-durata'].forEach(id=>document.getElementById(id).value='');document.getElementById('p-tipo').value='ricorrente';document.getElementById('p-mese-inizio').value='1';document.getElementById('p-anno-inizio').value='2026';toggleTipo();populateProfSelect();populateBUSelect();renderCostiList();renderScadenzeList();renderBUSplitList();document.getElementById('modal-progetto').classList.remove('hidden');}
+function editProgetto(id){const p=state.progetti.find(x=>x.id===id);if(!p)return;editingProgettoId=id;editingCostoIdx=null;tempCosti=(p.costi||[]).map(c=>({...c}));tempScadenze=(p.scadenze||[]).map(s=>({...s}));tempBUSplit=(p.buSplit||[]).map(s=>({...s}));document.getElementById('modal-progetto-title').textContent='Modifica Progetto';document.getElementById('p-cliente').value=p.cliente;document.getElementById('p-servizio').value=p.servizio;document.getElementById('p-tipo').value=p.tipo;document.getElementById('p-importo').value=p.importo;document.getElementById('p-mese-inizio').value=p.meseInizio;document.getElementById('p-anno-inizio').value=p.annoInizio;document.getElementById('p-durata').value=p.durata;toggleTipo();populateProfSelect();populateBUSelect();renderCostiList();renderScadenzeList();renderBUSplitList();document.getElementById('modal-progetto').classList.remove('hidden');}
 function closeModalProgetto(){document.getElementById('modal-progetto').classList.add('hidden');}
 function toggleTipo(){
   const t=document.getElementById('p-tipo').value;
@@ -1298,13 +1299,30 @@ function renderCostiList(){
     const tipoLabel=c.tipo==='unatantum'?`<span class="badge badge-blue" style="font-size:10px">Una tantum ${MESI[(parseInt(c.mese)||1)-1]} ${c.anno||2026}</span>`:`<span class="badge badge-green" style="font-size:10px">Mensile</span>`;
     const ivaLabel=c.iva==0?'<span class="badge badge-gold" style="font-size:10px">Forfettario</span>':`<span style="font-size:11px;color:var(--text-dim)">IVA ${c.iva}%</span>`;
     const buLabel=bu?`<span class="bu-chip" style="color:${bu.colore};background:${bu.colore}22">${bu.nome}</span>`:'';
-    return`<div style="display:flex;gap:10px;align-items:center;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:6px;flex-wrap:wrap">
+    const isEditing=editingCostoIdx===i;
+    return`<div style="display:flex;gap:10px;align-items:center;background:${isEditing?'rgba(201,169,110,0.08)':'var(--bg)'};border:1px solid ${isEditing?'var(--gold-dim)':'var(--border)'};border-radius:8px;padding:8px 12px;margin-bottom:6px;flex-wrap:wrap">
       <span style="flex:1;font-size:13px;min-width:120px">${pr?pr.nome+' ('+pr.ruolo+')':'N/D'}</span>
       <span class="text-red fw-500">${fmt(parseFloat(c.importo))}</span>
       ${ivaLabel}${tipoLabel}${buLabel}
+      <button class="btn btn-ghost btn-sm" onclick="startEditCosto(${i})" title="Modifica">✎</button>
       <button class="delete-btn" onclick="removeCosto(${i})">✕</button>
     </div>`;
   }).join('');
+}
+function startEditCosto(i){
+  const c=tempCosti[i];
+  editingCostoIdx=i;
+  document.getElementById('new-prof-select').value=c.profId||'';
+  document.getElementById('new-prof-bu').value=c.buId||'';
+  document.getElementById('new-prof-importo').value=c.importo||'';
+  document.getElementById('new-prof-iva').value=c.iva||22;
+  document.getElementById('new-prof-tipo').value=c.tipo||'mensile';
+  document.getElementById('new-prof-mese').value=c.mese||1;
+  document.getElementById('new-prof-anno').value=c.anno||2026;
+  toggleCostoTipo();
+  renderCostiList();
+  // Change button text
+  document.querySelector('[onclick="addCostoRow()"]').textContent='✓ Salva Modifica';
 }
 function addCostoRow(){
   const profId=parseInt(document.getElementById('new-prof-select').value);
@@ -1315,11 +1333,18 @@ function addCostoRow(){
   const mese=parseInt(document.getElementById('new-prof-mese').value)||1;
   const anno=parseInt(document.getElementById('new-prof-anno').value)||2026;
   const buId=parseInt(document.getElementById('new-prof-bu').value)||null;
-  tempCosti.push({profId,importo,iva,tipo,mese,anno,buId});
+  const obj={profId,importo,iva,tipo,mese,anno,buId};
+  if(editingCostoIdx!==null){
+    tempCosti[editingCostoIdx]=obj;
+    editingCostoIdx=null;
+  } else {
+    tempCosti.push(obj);
+  }
   document.getElementById('new-prof-select').value='';
   document.getElementById('new-prof-importo').value='';
   document.getElementById('new-prof-bu').value='';
   document.getElementById('new-prof-tipo').value='mensile';
+  document.querySelector('[onclick="addCostoRow()"]').textContent='＋ Aggiungi';
   toggleCostoTipo();
   renderCostiList();
 }
