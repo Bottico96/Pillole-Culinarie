@@ -6,113 +6,122 @@
 <title>Pillole Culinarie – Gestione Fatture</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0f0e0c;--surface:#1a1916;--surface2:#232220;--border:#2e2c29;--gold:#c9a96e;--gold-light:#e8c98a;--gold-dim:#7a6340;--text:#f0ece4;--text-muted:#8a8278;--text-dim:#5a5650;--green:#6a9e6a;--red:#c06060;--blue:#6a8ab0;--purple:#9a7ab0;--radius:10px;--transition:0.2s ease;}
+:root{
+  --bg:#f5f4f1;--surface:#ffffff;--surface2:#f0eeea;--border:#e2dfd8;
+  --gold:#a07840;--gold-light:#c49a58;--gold-dim:#c8a870;
+  --text:#1a1814;--text-muted:#6b6560;--text-dim:#9e9890;
+  --green:#2d7a3a;--red:#c0392b;--blue:#2c5f8a;--purple:#6b4a9a;
+  --radius:10px;--transition:0.2s ease;
+  --shadow:0 1px 3px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md:0 4px 12px rgba(0,0,0,0.08),0 2px 4px rgba(0,0,0,0.04);
+}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;min-height:100vh;}
 .app{display:flex;height:100vh;overflow:hidden;}
-.sidebar{width:230px;min-width:230px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;}
-.main{flex:1;overflow-y:auto;display:flex;flex-direction:column;}
-.sidebar-logo{padding:24px 20px 16px;border-bottom:1px solid var(--border);}
-.sidebar-logo .brand{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:500;color:var(--gold);line-height:1.2;}
+.sidebar{width:230px;min-width:230px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;box-shadow:var(--shadow);}
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column;background:var(--bg);}
+.sidebar-logo{padding:24px 20px 16px;border-bottom:1px solid var(--border);background:var(--surface);}
+.sidebar-logo .brand{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--gold);line-height:1.2;}
 .sidebar-logo .sub{font-size:10px;color:var(--text-dim);letter-spacing:0.15em;text-transform:uppercase;margin-top:2px;}
 .nav-section{padding:12px 0;border-bottom:1px solid var(--border);}
-.nav-label{font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-dim);padding:0 20px 8px;}
+.nav-label{font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-dim);padding:0 20px 8px;font-weight:600;}
 .nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;cursor:pointer;color:var(--text-muted);transition:var(--transition);font-size:13px;border-left:2px solid transparent;}
-.nav-item:hover{color:var(--text);background:rgba(201,169,110,0.05);}
-.nav-item.active{color:var(--gold);background:rgba(201,169,110,0.08);border-left-color:var(--gold);}
+.nav-item:hover{color:var(--text);background:rgba(160,120,64,0.06);}
+.nav-item.active{color:var(--gold);background:rgba(160,120,64,0.08);border-left-color:var(--gold);font-weight:500;}
 .nav-icon{font-size:15px;width:18px;text-align:center;}
-.page-header{padding:24px 32px 0;}
-.page-title{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:500;}
+.page-header{padding:28px 32px 0;background:var(--bg);}
+.page-title{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:600;color:var(--text);}
 .page-sub{font-size:12px;color:var(--text-dim);margin-top:3px;}
 .header-actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;align-items:center;}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius);border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;transition:var(--transition);text-decoration:none;}
-.btn-primary{background:var(--gold);color:#1a1510;}.btn-primary:hover{background:var(--gold-light);}
-.btn-ghost{background:transparent;color:var(--text-muted);border:1px solid var(--border);}.btn-ghost:hover{border-color:var(--gold-dim);color:var(--text);}
-.btn-danger{background:rgba(192,96,96,0.15);color:var(--red);border:1px solid rgba(192,96,96,0.3);}.btn-danger:hover{background:rgba(192,96,96,0.25);}
-.btn-email{background:rgba(106,138,176,0.12);color:var(--blue);border:1px solid rgba(106,138,176,0.3);}.btn-email:hover{background:rgba(106,138,176,0.22);}
+.btn-primary{background:var(--gold);color:#fff;box-shadow:0 1px 3px rgba(160,120,64,0.3);}.btn-primary:hover{background:var(--gold-light);box-shadow:0 2px 6px rgba(160,120,64,0.4);}
+.btn-ghost{background:var(--surface);color:var(--text-muted);border:1px solid var(--border);}.btn-ghost:hover{border-color:var(--gold-dim);color:var(--text);background:var(--surface2);}
+.btn-danger{background:rgba(192,57,43,0.08);color:var(--red);border:1px solid rgba(192,57,43,0.2);}.btn-danger:hover{background:rgba(192,57,43,0.15);}
+.btn-email{background:rgba(44,95,138,0.08);color:var(--blue);border:1px solid rgba(44,95,138,0.2);}.btn-email:hover{background:rgba(44,95,138,0.15);}
 .btn-sm{padding:5px 10px;font-size:12px;}
 .content{padding:20px 32px 40px;flex:1;}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;}
-.card-title{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:500;color:var(--gold);margin-bottom:14px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);}
+.card-title{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;color:var(--gold);margin-bottom:14px;}
 .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
 .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
 .grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
-.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;}
-.stat-label{font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-dim);}
-.stat-value{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:500;color:var(--text);margin:4px 0 2px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow);}
+.stat-label{font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-dim);font-weight:600;}
+.stat-value{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:var(--text);margin:4px 0 2px;}
 .stat-note{font-size:11px;color:var(--text-muted);}
 .stat-card.gold .stat-value{color:var(--gold);}.stat-card.green .stat-value{color:var(--green);}.stat-card.red .stat-value{color:var(--red);}.stat-card.purple .stat-value{color:var(--purple);}
 .table-wrap{overflow-x:auto;}
 table{width:100%;border-collapse:collapse;}
-th{font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-dim);padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;}
-td{padding:11px 14px;border-bottom:1px solid rgba(46,44,41,0.5);font-size:13px;vertical-align:middle;}
-tr:last-child td{border-bottom:none;}tr:hover td{background:rgba(201,169,110,0.03);}
+th{font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-dim);padding:10px 14px;text-align:left;border-bottom:2px solid var(--border);white-space:nowrap;font-weight:600;background:var(--surface2);}
+td{padding:11px 14px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}tr:hover td{background:rgba(160,120,64,0.03);}
 .badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;}
-.badge-gold{background:rgba(201,169,110,0.12);color:var(--gold);border:1px solid rgba(201,169,110,0.25);}
-.badge-blue{background:rgba(106,138,176,0.12);color:var(--blue);border:1px solid rgba(106,138,176,0.25);}
-.badge-purple{background:rgba(154,122,176,0.12);color:var(--purple);border:1px solid rgba(154,122,176,0.25);}
-.badge-red{background:rgba(192,96,96,0.12);color:var(--red);border:1px solid rgba(192,96,96,0.25);}
-.badge-green{background:rgba(106,158,106,0.12);color:var(--green);border:1px solid rgba(106,158,106,0.25);}
+.badge-gold{background:rgba(160,120,64,0.1);color:var(--gold);border:1px solid rgba(160,120,64,0.25);}
+.badge-blue{background:rgba(44,95,138,0.08);color:var(--blue);border:1px solid rgba(44,95,138,0.2);}
+.badge-purple{background:rgba(107,74,154,0.08);color:var(--purple);border:1px solid rgba(107,74,154,0.2);}
+.badge-red{background:rgba(192,57,43,0.08);color:var(--red);border:1px solid rgba(192,57,43,0.2);}
+.badge-green{background:rgba(45,122,58,0.08);color:var(--green);border:1px solid rgba(45,122,58,0.2);}
 .month-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;}
-.month-chip{padding:6px 14px;border-radius:20px;border:1px solid var(--border);cursor:pointer;font-size:12px;color:var(--text-muted);transition:var(--transition);}
-.month-chip:hover{border-color:var(--gold-dim);color:var(--text);}
-.month-chip.active{background:rgba(201,169,110,0.12);border-color:var(--gold);color:var(--gold);font-weight:500;}
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px;backdrop-filter:blur(4px);}
-.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px;width:100%;max-width:680px;max-height:92vh;overflow-y:auto;}
-.modal-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:500;color:var(--gold);margin-bottom:20px;}
+.month-chip{padding:6px 14px;border-radius:20px;border:1px solid var(--border);cursor:pointer;font-size:12px;color:var(--text-muted);transition:var(--transition);background:var(--surface);}
+.month-chip:hover{border-color:var(--gold-dim);color:var(--gold);background:rgba(160,120,64,0.05);}
+.month-chip.active{background:var(--gold);border-color:var(--gold);color:#fff;font-weight:600;box-shadow:0 2px 6px rgba(160,120,64,0.3);}
+.modal-overlay{position:fixed;inset:0;background:rgba(26,24,20,0.45);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px;backdrop-filter:blur(6px);}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px;width:100%;max-width:680px;max-height:92vh;overflow-y:auto;box-shadow:var(--shadow-md);}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--text);margin-bottom:20px;}
 .modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;padding-top:18px;border-top:1px solid var(--border);}
 .form-group{margin-bottom:16px;}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 .form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
-label{display:block;font-size:12px;color:var(--text-muted);margin-bottom:6px;}
+label{display:block;font-size:12px;color:var(--text-muted);margin-bottom:6px;font-weight:500;}
 input,select,textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;transition:var(--transition);outline:none;}
-input:focus,select:focus,textarea:focus{border-color:var(--gold-dim);box-shadow:0 0 0 2px rgba(201,169,110,0.1);}
+input:focus,select:focus,textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(160,120,64,0.12);background:var(--surface);}
 textarea{resize:vertical;min-height:60px;}select option{background:var(--surface);}
 .divider{border:none;border-top:1px solid var(--border);margin:20px 0;}
-.section-title{font-size:11px;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-dim);margin-bottom:10px;}
-.progress-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:6px;}
-.progress-fill{height:100%;border-radius:2px;background:var(--gold);}.progress-fill.red{background:var(--red);}.progress-fill.purple{background:var(--purple);}
+.section-title{font-size:11px;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-dim);margin-bottom:10px;font-weight:600;}
+.progress-bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:6px;}
+.progress-fill{height:100%;border-radius:3px;background:var(--gold);}.progress-fill.red{background:var(--red);}.progress-fill.purple{background:var(--purple);}
 .pills-row{display:flex;flex-wrap:wrap;gap:6px;}
 .pill{padding:3px 10px;border-radius:12px;font-size:11px;background:var(--surface2);color:var(--text-muted);border:1px solid var(--border);}
 .empty-state{text-align:center;padding:60px 20px;color:var(--text-dim);}
 .empty-state .icon{font-size:40px;margin-bottom:12px;}
-::-webkit-scrollbar{width:6px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+::-webkit-scrollbar{width:6px;}::-webkit-scrollbar-track{background:var(--bg);}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}::-webkit-scrollbar-thumb:hover{background:var(--text-dim);}
 .hidden{display:none !important;}
 .text-right{text-align:right;}.text-gold{color:var(--gold);}.text-green{color:var(--green);}.text-red{color:var(--red);}.text-purple{color:var(--purple);}.text-muted{color:var(--text-muted);}.fw-500{font-weight:500;}
-.delete-btn{background:none;border:none;cursor:pointer;color:var(--text-dim);font-size:16px;transition:var(--transition);padding:2px 6px;}.delete-btn:hover{color:var(--red);}
-.sc-add-box{background:var(--bg);border:1px dashed var(--border);border-radius:8px;padding:14px;margin-top:8px;}
-.email-preview{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px;font-size:12px;white-space:pre-wrap;line-height:1.7;color:var(--text-muted);max-height:320px;overflow-y:auto;font-family:'Courier New',monospace;}
-.piva-tag{background:rgba(201,169,110,0.08);border:1px solid rgba(201,169,110,0.2);border-radius:6px;padding:2px 10px;font-size:12px;font-family:monospace;color:var(--gold);display:inline-block;}
-.piva-missing{background:rgba(192,96,96,0.08);border:1px solid rgba(192,96,96,0.2);border-radius:6px;padding:2px 10px;font-size:12px;color:var(--red);display:inline-block;}
+.delete-btn{background:none;border:none;cursor:pointer;color:var(--text-dim);font-size:16px;transition:var(--transition);padding:2px 6px;border-radius:4px;}.delete-btn:hover{color:var(--red);background:rgba(192,57,43,0.08);}
+.sc-add-box{background:var(--surface2);border:1px dashed var(--border);border-radius:8px;padding:14px;margin-top:8px;}
+.email-preview{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:16px;font-size:12px;white-space:pre-wrap;line-height:1.7;color:var(--text-muted);max-height:320px;overflow-y:auto;font-family:'Courier New',monospace;}
+.piva-tag{background:rgba(160,120,64,0.08);border:1px solid rgba(160,120,64,0.25);border-radius:6px;padding:2px 10px;font-size:12px;font-family:monospace;color:var(--gold);display:inline-block;font-weight:600;}
+.piva-missing{background:rgba(192,57,43,0.06);border:1px solid rgba(192,57,43,0.2);border-radius:6px;padding:2px 10px;font-size:12px;color:var(--red);display:inline-block;}
 .cf-card-border{border-left:3px solid var(--purple);}
 .tag-ricorrenza{display:inline-flex;align-items:center;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:500;}
-.tag-mensile{background:rgba(106,158,106,0.12);color:var(--green);border:1px solid rgba(106,158,106,0.25);}
-.tag-unatantum{background:rgba(106,138,176,0.12);color:var(--blue);border:1px solid rgba(106,138,176,0.25);}
-.tag-custom{background:rgba(201,169,110,0.12);color:var(--gold);border:1px solid rgba(201,169,110,0.25);}
-.cf-row{display:flex;align-items:flex-start;gap:14px;padding:14px 0;border-bottom:1px solid rgba(46,44,41,0.5);}
+.tag-mensile{background:rgba(45,122,58,0.08);color:var(--green);border:1px solid rgba(45,122,58,0.2);}
+.tag-unatantum{background:rgba(44,95,138,0.08);color:var(--blue);border:1px solid rgba(44,95,138,0.2);}
+.tag-custom{background:rgba(160,120,64,0.08);color:var(--gold);border:1px solid rgba(160,120,64,0.2);}
+.cf-row{display:flex;align-items:flex-start;gap:14px;padding:14px 0;border-bottom:1px solid var(--border);}
 .cf-row:last-child{border-bottom:none;}
-.iva-badge{display:inline-flex;align-items:center;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600;background:rgba(154,122,176,0.15);color:var(--purple);border:1px solid rgba(154,122,176,0.3);}
-.margine-box{background:linear-gradient(135deg,rgba(106,158,106,0.08),rgba(106,158,106,0.04));border:1px solid rgba(106,158,106,0.2);border-radius:var(--radius);padding:16px 20px;margin-top:16px;}
-.margine-box.negativo{background:linear-gradient(135deg,rgba(192,96,96,0.08),rgba(192,96,96,0.04));border-color:rgba(192,96,96,0.2);}
-.scad-row{display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid rgba(46,44,41,0.5);transition:var(--transition);}
+.iva-badge{display:inline-flex;align-items:center;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600;background:rgba(107,74,154,0.08);color:var(--purple);border:1px solid rgba(107,74,154,0.2);}
+.margine-box{background:linear-gradient(135deg,rgba(45,122,58,0.06),rgba(45,122,58,0.02));border:1px solid rgba(45,122,58,0.2);border-radius:var(--radius);padding:16px 20px;margin-top:16px;}
+.margine-box.negativo{background:linear-gradient(135deg,rgba(192,57,43,0.06),rgba(192,57,43,0.02));border-color:rgba(192,57,43,0.2);}
+.scad-row{display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--border);transition:var(--transition);}
 .scad-row:last-child{border-bottom:none;}
-.scad-row:hover{background:rgba(201,169,110,0.03);}
+.scad-row:hover{background:rgba(160,120,64,0.03);}
 .scad-day{min-width:44px;height:44px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:600;flex-shrink:0;}
 .scad-day .day-num{font-family:'Cormorant Garamond',serif;font-size:20px;line-height:1;}
 .scad-day .day-lab{font-size:9px;text-transform:uppercase;letter-spacing:0.08em;margin-top:1px;}
-.scad-day.urgente{background:rgba(192,96,96,0.15);color:var(--red);border:1px solid rgba(192,96,96,0.3);}
-.scad-day.vicino{background:rgba(201,169,110,0.12);color:var(--gold);border:1px solid rgba(201,169,110,0.3);}
-.scad-day.normale{background:rgba(154,122,176,0.1);color:var(--purple);border:1px solid rgba(154,122,176,0.25);}
-.scad-day.passato{background:rgba(90,86,80,0.15);color:var(--text-dim);border:1px solid rgba(90,86,80,0.3);}
+.scad-day.urgente{background:rgba(192,57,43,0.1);color:var(--red);border:1px solid rgba(192,57,43,0.25);}
+.scad-day.vicino{background:rgba(160,120,64,0.1);color:var(--gold);border:1px solid rgba(160,120,64,0.25);}
+.scad-day.normale{background:rgba(107,74,154,0.07);color:var(--purple);border:1px solid rgba(107,74,154,0.2);}
+.scad-day.passato{background:var(--surface2);color:var(--text-dim);border:1px solid var(--border);}
 .urgency-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 .urgency-dot.urgente{background:var(--red);}
 .urgency-dot.vicino{background:var(--gold);}
 .urgency-dot.normale{background:var(--purple);}
 .urgency-dot.passato{background:var(--text-dim);}
-.bu-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;border-top:3px solid var(--bu-color,var(--gold));}
+.bu-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;border-top:3px solid var(--bu-color,var(--gold));box-shadow:var(--shadow);}
 .bu-bar{height:6px;border-radius:3px;background:var(--border);overflow:hidden;margin-top:8px;}
 .bu-bar-fill{height:100%;border-radius:3px;background:var(--bu-color,var(--gold));}
-.bu-chip{display:inline-flex;align-items:center;padding:2px 10px;border-radius:12px;font-size:11px;font-weight:500;border:1px solid currentColor;opacity:0.85;}
+.bu-chip{display:inline-flex;align-items:center;padding:2px 10px;border-radius:12px;font-size:11px;font-weight:500;border:1px solid currentColor;opacity:0.9;}
+.bu-split-warning{background:rgba(192,57,43,0.06);border:1px solid rgba(192,57,43,0.2);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--red);display:flex;justify-content:space-between;align-items:center;margin-top:8px;}
 </style>
 </head>
 <body>
@@ -283,7 +292,7 @@ textarea{resize:vertical;min-height:60px;}select option{background:var(--surface
           <option value="spot">Spot (scadenze personalizzate)</option>
         </select>
       </div>
-      <div class="form-group"><label id="p-importo-label">Importo / mese (€, escluso IVA)</label><input type="number" id="p-importo" placeholder="es. 1300"></div>
+      <div class="form-group"><label id="p-importo-label">Importo / mese (€, escluso IVA)</label><input type="number" id="p-importo" placeholder="es. 1300" oninput="renderBUSplitList()"></div>
     </div>
     <hr class="divider" style="margin:12px 0">
     <div class="section-title">Ripartizione per Business Unit</div>
@@ -314,12 +323,14 @@ textarea{resize:vertical;min-height:60px;}select option{background:var(--surface
       <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Aggiungi ogni tranche: descrizione, importo e data di scadenza prevista.</div>
       <div id="scadenze-list"></div>
       <div class="sc-add-box">
-        <div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:10px;align-items:end">
+        <div style="display:grid;grid-template-columns:2fr 0.6fr 1fr 1fr auto;gap:10px;align-items:end">
           <div><label>Descrizione tranche</label><input type="text" id="sc-desc" placeholder="es. 50% all'accettazione"></div>
-          <div><label>Importo (€)</label><input type="number" id="sc-importo" placeholder="1750"></div>
+          <div><label>% sul totale</label><input type="number" id="sc-pct" placeholder="50" min="1" max="100" oninput="calcTrancheImporto()"></div>
+          <div><label>Importo (€)</label><input type="number" id="sc-importo" placeholder="1750" oninput="document.getElementById('sc-pct').value=''"></div>
           <div><label>Data scadenza</label><input type="date" id="sc-data"></div>
           <div><button class="btn btn-ghost btn-sm" style="white-space:nowrap" onclick="addScadenza()">＋</button></div>
         </div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:6px">Inserisci la % per calcolare l'importo automaticamente, oppure scrivi l'importo direttamente.</div>
       </div>
     </div>
     <hr class="divider">
@@ -669,7 +680,7 @@ function renderBUSplitList(){
   const el=document.getElementById('bu-split-list');if(!el)return;
   el.innerHTML=tempBUSplit.map((s,i)=>{
     const b=getBU(s.buId);
-    return`<div style="display:flex;gap:10px;align-items:center;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:6px">
+    return`<div style="display:flex;gap:10px;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:6px">
       <div style="width:8px;height:8px;border-radius:50%;background:${b.colore};flex-shrink:0"></div>
       <span style="flex:1;font-size:13px">${b.nome}</span>
       <span style="color:var(--gold);font-weight:500">${fmt(parseFloat(s.importo)||0)}</span>
@@ -678,8 +689,23 @@ function renderBUSplitList(){
   }).join('');
   // Mostra totale
   const tot=tempBUSplit.reduce((a,s)=>a+(parseFloat(s.importo)||0),0);
+  const totImporto=parseFloat(document.getElementById('p-importo').value)||0;
   const totEl=document.getElementById('bu-split-totale');
-  if(totEl) totEl.innerHTML=tot>0?`Totale ripartito: <strong style="color:var(--gold)">${fmt(tot)}</strong>`:'';
+  if(totEl){
+    if(tot<=0){totEl.innerHTML='';return;}
+    let html=`Totale ripartito: <strong style="color:var(--gold)">${fmt(tot)}</strong>`;
+    if(totImporto>0&&Math.abs(tot-totImporto)>0.01){
+      const diff=totImporto-tot;
+      html+=`<div class="bu-split-warning" style="margin-top:6px">
+        ⚠ La somma delle BU (${fmt(tot)}) non corrisponde all'importo del progetto (${fmt(totImporto)}). 
+        Differenza: <strong>${diff>0?'+':''}${fmt(diff)}</strong>
+        <button onclick="this.parentElement.parentElement.querySelector('.bu-split-warning').remove()" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:16px;padding:0 4px">✕</button>
+      </div>`;
+    } else if(totImporto>0&&Math.abs(tot-totImporto)<0.01){
+      html+=` <span style="color:var(--green);font-size:12px">✓ Corrisponde</span>`;
+    }
+    totEl.innerHTML=html;
+  }
 }
 function addBUSplit(){
   const buId=parseInt(document.getElementById('new-bu-select').value);
@@ -872,7 +898,7 @@ function renderDashboard(){
   ivaBox.innerHTML=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
       <div>
-        <div style="font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:500;color:var(--blue)">⚖ Saldo IVA ${anno}</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:500;color:var(--blue);font-weight:600">⚖ Saldo IVA ${anno}</div>
         <div style="font-size:12px;color:var(--text-dim);margin-top:2px">IVA a debito − IVA a credito = da versare (o credito)</div>
       </div>
       <div style="display:flex;gap:24px;font-size:13px;flex-wrap:wrap;align-items:center">
@@ -940,7 +966,14 @@ function renderCalMese(anno,mese){
   let profMap={};
   state.professionisti.forEach(prof=>{
     let entries=[];
-    state.progetti.forEach(p=>{if(progettoAttivo(p,anno,mese))(p.costi||[]).forEach(c=>{if(c.profId==prof.id)entries.push({desc:`${p.cliente} – ${p.servizio}`,importo:parseFloat(c.importo)||0});});});
+    state.progetti.forEach(p=>{
+      (p.costi||[]).forEach(c=>{
+        if(c.profId==prof.id){
+          const imp=costoOperatoreMese(c,p,anno,mese);
+          if(imp>0)entries.push({desc:`${p.cliente} – ${p.servizio}`,importo:imp});
+        }
+      });
+    });
     const fissi=compensiFissiMese(prof,anno,mese);
     if(fissi>0)entries.push({desc:'Compenso fisso aziendale',importo:fissi,fisso:true});
     if(entries.length>0)profMap[prof.id]={prof,entries};
@@ -965,7 +998,7 @@ function renderCalMese(anno,mese){
       <div class="stat-card ${mg>=0?'green':'red'}"><div class="stat-label">Margine Netto</div><div class="stat-value">${fmtS(mg)} <span style="font-size:14px">(${totF>0?Math.round(mg/totF*100):0}%)</span></div><div class="stat-note">Sul fatturato del mese</div></div>
     </div>
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 18px;margin-bottom:16px;display:flex;gap:24px;flex-wrap:wrap;align-items:center">
-      <span style="font-size:12px;font-weight:500;color:var(--blue)">⚖ IVA ${MESI[mese-1]}</span>
+      <span style="font-size:12px;font-weight:500;color:var(--blue);font-weight:600">⚖ IVA ${MESI[mese-1]}</span>
       <span style="font-size:12px;color:var(--text-muted)">Debito: <strong style="color:var(--red)">${fmtS(ivaDeb)}</strong></span>
       <span style="font-size:12px;color:var(--text-muted)">Credito: <strong style="color:var(--green)">${fmtS(ivaCred)}</strong></span>
       <span style="font-size:13px;font-weight:600;color:${ivaSaldo>=0?'var(--red)':'var(--green)'}">
@@ -980,7 +1013,7 @@ function renderCalMese(anno,mese){
           <thead><tr><th>Cliente</th><th>Servizio</th><th>Tipo</th><th>Scadenza</th><th class="text-right">Imponibile</th><th class="text-right">Con IVA 22%</th></tr></thead>
           <tbody>
             ${righeClienti.map(r=>`<tr><td class="fw-500">${r.cliente}</td><td class="text-muted">${r.servizio}${r.desc?'<br><span style="font-size:11px;color:var(--text-dim)">'+r.desc+'</span>':''}</td><td>${r.tipo==='spot'?'<span class="badge badge-blue">Spot</span>':'<span class="badge badge-gold">Mensile</span>'}</td><td style="font-size:12px;color:var(--text-muted)">${r.data?fmtDate(r.data):'—'}</td><td class="text-right text-gold">${fmt(r.importo)}</td><td class="text-right">${fmt(r.importo*1.22)}</td></tr>`).join('')}
-            <tr style="background:rgba(201,169,110,0.05)"><td colspan="4" class="fw-500">TOTALE</td><td class="text-right text-gold fw-500">${fmt(totF)}</td><td class="text-right fw-500">${fmt(totF*1.22)}</td></tr>
+            <tr style="background:rgba(160,120,64,0.05)"><td colspan="4" class="fw-500">TOTALE</td><td class="text-right text-gold fw-500">${fmt(totF)}</td><td class="text-right fw-500">${fmt(totF*1.22)}</td></tr>
           </tbody>
         </table></div>`}
       </div>
@@ -1102,7 +1135,7 @@ function renderProgetti(){
       <div class="grid-3" style="margin-bottom:14px">
         <div><div class="stat-label">Importo${p.tipo==='ricorrente'?' / mese':' totale'}</div><div style="font-size:15px;font-weight:500;color:var(--gold);margin-top:4px">${fmt(p.tipo==='spot'?totFat:parseFloat(p.importo)||0)}</div></div>
         <div><div class="stat-label">Durata</div><div style="font-size:15px;font-weight:500;margin-top:4px">${p.tipo==='spot'?((p.scadenze&&p.scadenze.length>0)?p.scadenze.length+' tranche':'1 fattura'):mesi.length+' mesi'}</div></div>
-        <div><div class="stat-label">Margine Progetto</div><div style="font-size:15px;font-weight:500;color:${mg>=0?'var(--green)':'var(--red)'};margin-top:4px">${fmt(mg)}</div><div style="font-size:11px;color:var(--text-dim)">Fat. ${fmt(totFat)} – Op. ${fmt(totCP)}</div></div>
+        <div><div class="stat-label">Margine Progetto</div><div style="font-size:15px;font-weight:500;color:${mg>=0?'var(--green)':'var(--red)'};margin-top:4px">${fmt(mg)} <span style="font-size:12px">(${totFat>0?Math.round(mg/totFat*100):0}%)</span></div><div style="font-size:11px;color:var(--text-dim)">Fat. ${fmt(totFat)} – Op. ${fmt(totCP)}</div></div>
       </div>
       ${p.tipo==='spot'&&p.scadenze&&p.scadenze.length>0?`<div style="margin-bottom:14px"><div class="section-title">Scadenze</div><div class="table-wrap"><table><thead><tr><th>Tranche</th><th>Importo</th><th>Con IVA 22%</th><th>Scadenza</th></tr></thead><tbody>${p.scadenze.map(sc=>`<tr><td>${sc.desc||'—'}</td><td class="text-gold">${fmt(parseFloat(sc.importo)||0)}</td><td>${fmt((parseFloat(sc.importo)||0)*1.22)}</td><td style="color:var(--text-muted)">${sc.data?fmtDate(sc.data):'—'}</td></tr>`).join('')}</tbody></table></div></div>`:''}
       ${(p.costi||[]).length>0?`<div><div class="section-title">Costi Operatori</div><div class="pills-row">${(p.costi||[]).map(c=>{const pr=state.professionisti.find(x=>x.id==c.profId);return`<span class="pill">${pr?pr.nome:'N/D'}: ${fmt(parseFloat(c.importo))}${p.tipo==='ricorrente'?'/mese':' tot.'}</span>`;}).join('')}</div></div>`:''}
@@ -1140,7 +1173,7 @@ function renderProfessionisti(){
         </div>
         <div><div class="section-title">Compensi Fissi${cfTot>0?' · tot. '+fmt(cfTot):''}</div>
           ${(prof.compensiFissi||[]).length===0?'<div class="text-muted" style="font-size:12px">Nessuno</div>':(prof.compensiFissi||[]).map(cf=>`<div style="font-size:12px;padding:5px 0;display:flex;justify-content:space-between;border-bottom:1px solid rgba(46,44,41,0.4)"><span>${fmt(parseFloat(cf.importo))}/mese × ${cf.durata} mesi</span><span class="text-muted">da ${MESI[parseInt(cf.meseInizio)-1]} ${cf.annoInizio}</span></div>`).join('')}
-          ${totMese>0?`<div style="margin-top:10px;padding:8px 12px;background:rgba(201,169,110,0.06);border:1px solid rgba(201,169,110,0.15);border-radius:8px;display:flex;justify-content:space-between;font-size:13px"><span>Da fatturare questo mese</span><span class="text-gold fw-500">${fmt(totMese)}</span></div>`:''}
+          ${totMese>0?`<div style="margin-top:10px;padding:8px 12px;background:rgba(160,120,64,0.05);border:1px solid rgba(160,120,64,0.12);border-radius:8px;display:flex;justify-content:space-between;font-size:13px"><span>Da fatturare questo mese</span><span class="text-gold fw-500">${fmt(totMese)}</span></div>`:''}
         </div>
       </div>
     </div>`;}).join('');
@@ -1288,7 +1321,7 @@ function toggleCostoTipo(){
   document.getElementById('new-prof-mese-group').style.display=t==='unatantum'?'block':'none';
   document.getElementById('new-prof-anno-group').style.display=t==='unatantum'?'block':'none';
 }
-function renderScadenzeList(){document.getElementById('scadenze-list').innerHTML=tempScadenze.length===0?'<div style="font-size:12px;color:var(--text-dim);margin-bottom:8px;padding:4px 0">Nessuna scadenza.</div>':tempScadenze.map((sc,i)=>`<div style="display:flex;gap:10px;align-items:center;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:6px"><span style="flex:1.5;font-size:13px">${sc.desc||'Tranche '+(i+1)}</span><span class="text-gold">${fmt(parseFloat(sc.importo)||0)}</span><span style="font-size:12px;color:var(--text-muted)">${sc.data?fmtDate(sc.data):'nessuna data'}</span><button class="delete-btn" onclick="removeScadenza(${i})">✕</button></div>`).join('');}
+function renderScadenzeList(){document.getElementById('scadenze-list').innerHTML=tempScadenze.length===0?'<div style="font-size:12px;color:var(--text-dim);margin-bottom:8px;padding:4px 0">Nessuna scadenza.</div>':tempScadenze.map((sc,i)=>`<div style="display:flex;gap:10px;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:6px"><span style="flex:1.5;font-size:13px">${sc.desc||'Tranche '+(i+1)}</span><span class="text-gold">${fmt(parseFloat(sc.importo)||0)}</span><span style="font-size:12px;color:var(--text-muted)">${sc.data?fmtDate(sc.data):'nessuna data'}</span><button class="delete-btn" onclick="removeScadenza(${i})">✕</button></div>`).join('');}
 function addScadenza(){const desc=document.getElementById('sc-desc').value.trim(),importo=parseFloat(document.getElementById('sc-importo').value),data=document.getElementById('sc-data').value;if(!importo){alert('Inserisci l\'importo.');return;}tempScadenze.push({desc,importo,data});document.getElementById('sc-desc').value='';document.getElementById('sc-importo').value='';document.getElementById('sc-data').value='';renderScadenzeList();}
 function removeScadenza(i){tempScadenze.splice(i,1);renderScadenzeList();}
 function populateProfSelect(){document.getElementById('new-prof-select').innerHTML='<option value="">-- Seleziona professionista --</option>'+state.professionisti.map(p=>`<option value="${p.id}">${p.nome} (${p.ruolo})</option>`).join('');}
@@ -1300,7 +1333,7 @@ function renderCostiList(){
     const ivaLabel=c.iva==0?'<span class="badge badge-gold" style="font-size:10px">Forfettario</span>':`<span style="font-size:11px;color:var(--text-dim)">IVA ${c.iva}%</span>`;
     const buLabel=bu?`<span class="bu-chip" style="color:${bu.colore};background:${bu.colore}22">${bu.nome}</span>`:'';
     const isEditing=editingCostoIdx===i;
-    return`<div style="display:flex;gap:10px;align-items:center;background:${isEditing?'rgba(201,169,110,0.08)':'var(--bg)'};border:1px solid ${isEditing?'var(--gold-dim)':'var(--border)'};border-radius:8px;padding:8px 12px;margin-bottom:6px;flex-wrap:wrap">
+    return`<div style="display:flex;gap:10px;align-items:center;background:${isEditing?'rgba(160,120,64,0.06)':'var(--bg)'};border:1px solid ${isEditing?'var(--gold-dim)':'var(--border)'};border-radius:8px;padding:8px 12px;margin-bottom:6px;flex-wrap:wrap">
       <span style="flex:1;font-size:13px;min-width:120px">${pr?pr.nome+' ('+pr.ruolo+')':'N/D'}</span>
       <span class="text-red fw-500">${fmt(parseFloat(c.importo))}</span>
       ${ivaLabel}${tipoLabel}${buLabel}
@@ -1364,7 +1397,7 @@ function deleteProgetto(id){if(!confirm('Eliminare?'))return;state.progetti=stat
 function openModalProfessionista(){editingProfId=null;tempCompensi=[];document.getElementById('modal-prof-title').textContent='Nuovo Professionista';['prof-nome','prof-ruolo','prof-email','prof-piva','prof-note'].forEach(id=>document.getElementById(id).value='');renderCompensiFissiList();document.getElementById('modal-professionista').classList.remove('hidden');}
 function editProfessionista(id){const prof=state.professionisti.find(x=>x.id===id);if(!prof)return;editingProfId=id;tempCompensi=(prof.compensiFissi||[]).map(c=>({...c}));document.getElementById('modal-prof-title').textContent='Modifica';document.getElementById('prof-nome').value=prof.nome;document.getElementById('prof-ruolo').value=prof.ruolo;document.getElementById('prof-email').value=prof.email||'';document.getElementById('prof-piva').value=prof.piva||'';document.getElementById('prof-note').value=prof.note||'';renderCompensiFissiList();document.getElementById('modal-professionista').classList.remove('hidden');}
 function closeModalProfessionista(){document.getElementById('modal-professionista').classList.add('hidden');}
-function renderCompensiFissiList(){document.getElementById('compensi-fissi-list').innerHTML=tempCompensi.map((c,i)=>`<div style="display:flex;gap:10px;align-items:center;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:6px"><span style="flex:1;font-size:13px">${fmt(parseFloat(c.importo))}/mese × ${c.durata} mesi</span><span class="text-muted" style="font-size:12px">da ${MESI[parseInt(c.meseInizio)-1]} ${c.annoInizio}</span><button class="delete-btn" onclick="removeCompenso(${i})">✕</button></div>`).join('');}
+function renderCompensiFissiList(){document.getElementById('compensi-fissi-list').innerHTML=tempCompensi.map((c,i)=>`<div style="display:flex;gap:10px;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:6px"><span style="flex:1;font-size:13px">${fmt(parseFloat(c.importo))}/mese × ${c.durata} mesi</span><span class="text-muted" style="font-size:12px">da ${MESI[parseInt(c.meseInizio)-1]} ${c.annoInizio}</span><button class="delete-btn" onclick="removeCompenso(${i})">✕</button></div>`).join('');}
 function addCompensoFisso(){const importo=parseFloat(document.getElementById('cf-importo').value),meseInizio=document.getElementById('cf-mese-inizio').value,annoInizio=document.getElementById('cf-anno-inizio').value,durata=parseInt(document.getElementById('cf-durata').value)||12;if(!importo){alert('Inserisci l\'importo.');return;}tempCompensi.push({importo,meseInizio,annoInizio,durata});document.getElementById('cf-importo').value='';document.getElementById('cf-durata').value='';renderCompensiFissiList();}
 function removeCompenso(i){tempCompensi.splice(i,1);renderCompensiFissiList();}
 function saveProfessionista(){const nome=document.getElementById('prof-nome').value.trim(),ruolo=document.getElementById('prof-ruolo').value.trim();if(!nome||!ruolo){alert('Compila nome e ruolo.');return;}const obj={id:editingProfId||state.nextIdProf++,nome,ruolo,email:document.getElementById('prof-email').value.trim(),piva:document.getElementById('prof-piva').value.trim(),note:document.getElementById('prof-note').value.trim(),compensiFissi:tempCompensi};if(editingProfId)state.professionisti[state.professionisti.findIndex(x=>x.id===editingProfId)]=obj;else state.professionisti.push(obj);saveState();closeModalProfessionista();renderProfessionisti();}
