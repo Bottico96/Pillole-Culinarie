@@ -877,6 +877,73 @@ function ivaCredito(anno,mese){
   return tot;
 }
 function saldoIva(anno,mese){return ivaDebito(anno,mese)-ivaCredito(anno,mese);}
+
+function saldoIvaTrimestre(anno,trimestre){
+  // trimestre: 1=gen-mar, 2=apr-giu, 3=lug-set, 4=ott-dic
+  const meseInizio=(trimestre-1)*3+1;
+  let deb=0,cred=0;
+  for(let m=meseInizio;m<meseInizio+3;m++){
+    deb+=ivaDebito(anno,m);
+    cred+=ivaCredito(anno,m);
+  }
+  return{debito:Math.round(deb),credito:Math.round(cred),saldo:Math.round(deb-cred)};
+}
+
+function renderIvaDashboard(anno){
+  const el=document.getElementById('dash-iva-box');
+  if(!el)return;
+  const iva=saldoIvaAnno(anno);
+  const oggi=new Date();
+  const meseOggi=oggi.getMonth()+1;
+  const annoOggi=oggi.getFullYear();
+  // Scadenze versamento IVA trimestrale in Italia: 16/05, 20/08, 16/11, 16/02(anno+1)
+  const scadenzeStr=['16 maggio','20 agosto','16 novembre','16 febbraio '+(anno+1)];
+  const nomiTrim=['1° Trim. (Gen–Mar)','2° Trim. (Apr–Giu)','3° Trim. (Lug–Set)','4° Trim. (Ott–Dic)'];
+  
+  // Prossimo trimestre da versare
+  let prossimo=-1;
+  if(anno===annoOggi){
+    const trimCorrente=Math.ceil(meseOggi/3);
+    prossimo=trimCorrente; // il trimestre in corso è quello da versare prossimamente
+  }
+
+  const trimestri=[1,2,3,4].map(t=>{
+    const s=saldoIvaTrimestre(anno,t);
+    const isProssimo=(t===prossimo);
+    const isPassato=anno<annoOggi||(anno===annoOggi&&t<Math.ceil(meseOggi/3));
+    return{t,s,isProssimo,isPassato,scadenza:scadenzeStr[t-1],nome:nomiTrim[t-1]};
+  });
+
+  el.innerHTML=`<div class="card" style="margin-bottom:20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--text)">⚖ IVA ${anno}</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-top:2px">Versamenti trimestrali — IVA a debito − IVA a credito</div>
+      </div>
+      <div style="display:flex;gap:20px;font-size:13px;flex-wrap:wrap">
+        <span>Debito annuo: <strong style="color:var(--red)">${fmtS(iva.debito)}</strong></span>
+        <span>Credito annuo: <strong style="color:var(--green)">${fmtS(iva.credito)}</strong></span>
+        <span style="font-weight:600;color:${iva.saldo>=0?'var(--red)':'var(--green)'}">
+          ${iva.saldo>=0?'Da versare':'Credito'} annuo: ${fmtS(Math.abs(iva.saldo))}
+        </span>
+      </div>
+    </div>
+    <div class="grid-4">
+      ${trimestri.map(({t,s,isProssimo,isPassato,scadenza,nome})=>`
+        <div style="border:${isProssimo?'2px solid var(--gold)':'1px solid var(--border)'};border-radius:10px;padding:14px 16px;background:${isProssimo?'rgba(160,120,64,0.05)':isPassato?'var(--surface2)':'var(--surface)'};position:relative">
+          ${isProssimo?`<div style="position:absolute;top:-10px;left:12px;background:var(--gold);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;letter-spacing:0.05em">PROSSIMO VERSAMENTO</div>`:''}
+          <div style="font-size:12px;font-weight:600;color:${isProssimo?'var(--gold)':isPassato?'var(--text-dim)':'var(--text-muted)'};margin-bottom:8px">${nome}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:${s.saldo>0?'var(--red)':s.saldo<0?'var(--green)':'var(--text-dim)'};margin-bottom:6px">
+            ${s.saldo>0?fmtS(s.saldo):s.saldo<0?'Credito '+fmtS(Math.abs(s.saldo)):'€ 0'}
+          </div>
+          <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px">Debito: ${fmtS(s.debito)} · Credito: ${fmtS(s.credito)}</div>
+          <div style="font-size:11px;color:${isProssimo?'var(--gold)':'var(--text-dim)'};font-weight:${isProssimo?'600':'400'}">Scadenza: ${scadenza}</div>
+          ${isPassato&&!isProssimo?`<div style="margin-top:6px;font-size:10px;color:var(--text-dim);background:var(--border);border-radius:4px;padding:2px 6px;display:inline-block">Già trascorso</div>`:''}
+        </div>
+      `).join('')}
+    </div>
+  </div>`;
+}
 function saldoIvaAnno(anno){
   let deb=0,cred=0;
   for(let m=1;m<=12;m++){deb+=ivaDebito(anno,m);cred+=ivaCredito(anno,m);}
@@ -901,23 +968,7 @@ function renderDashboard(){
     <div class="stat-card ${mg>=0?'green':'red'}"><div class="stat-label">Margine Netto</div><div class="stat-value">${fmtS(mg)}</div><div class="stat-note">${totF>0?Math.round(mg/totF*100):0}% del fatturato</div></div>
     <div class="stat-card ${mg>=0?'green':'red'}"><div class="stat-label">Margine %</div><div class="stat-value">${totF>0?Math.round(mg/totF*100):0}%</div><div class="stat-note">Sul fatturato lordo</div></div>`;
 
-  // Box IVA
-  const ivaBox=document.getElementById('dash-iva-box');
-  ivaBox.innerHTML=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px">
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
-      <div>
-        <div style="font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:500;color:var(--blue);font-weight:600">⚖ Saldo IVA ${anno}</div>
-        <div style="font-size:12px;color:var(--text-dim);margin-top:2px">IVA a debito − IVA a credito = da versare (o credito)</div>
-      </div>
-      <div style="display:flex;gap:24px;font-size:13px;flex-wrap:wrap;align-items:center">
-        <span>Debito (su ricavi): <strong style="color:var(--red)">${fmtS(iva.debito)}</strong></span>
-        <span>Credito (su costi): <strong style="color:var(--green)">${fmtS(iva.credito)}</strong></span>
-        <span style="font-size:15px;font-weight:600;color:${iva.saldo>=0?'var(--red)':'var(--green)'}">
-          ${iva.saldo>=0?'Da versare':'Credito'}: ${fmtS(Math.abs(iva.saldo))}
-        </span>
-      </div>
-    </div>
-  </div>`;
+  renderIvaDashboard(anno);
 
   // Margine breakdown box
   const mgBox=document.getElementById('dash-margine-box');
@@ -994,10 +1045,6 @@ function renderCalMese(anno,mese){
   const totCF=cfMese.reduce((a,x)=>a+x.importo,0);
   const totCosti=totCOp+totCF;
   const mg=totF-totCosti;
-  const ivaDeb=ivaDebito(anno,mese);
-  const ivaCred=ivaCredito(anno,mese);
-  const ivaSaldo=ivaDeb-ivaCred;
-
   el.innerHTML=`
     <div class="grid-4" style="margin-bottom:12px">
       <div class="stat-card gold"><div class="stat-label">Entrate – ${MESI[mese-1]}</div><div class="stat-value">${fmtS(totF)}</div><div class="stat-note">+ IVA ≈ ${fmtS(totF*1.22)}</div></div>
@@ -1005,14 +1052,7 @@ function renderCalMese(anno,mese){
       <div class="stat-card purple"><div class="stat-label">Costi Fissi</div><div class="stat-value">${fmtS(totCF)}</div><div class="stat-note">${cfMese.length} voci</div></div>
       <div class="stat-card ${mg>=0?'green':'red'}"><div class="stat-label">Margine Netto</div><div class="stat-value">${fmtS(mg)} <span style="font-size:14px">(${totF>0?Math.round(mg/totF*100):0}%)</span></div><div class="stat-note">Sul fatturato del mese</div></div>
     </div>
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 18px;margin-bottom:16px;display:flex;gap:24px;flex-wrap:wrap;align-items:center">
-      <span style="font-size:12px;font-weight:500;color:var(--blue);font-weight:600">⚖ IVA ${MESI[mese-1]}</span>
-      <span style="font-size:12px;color:var(--text-muted)">Debito: <strong style="color:var(--red)">${fmtS(ivaDeb)}</strong></span>
-      <span style="font-size:12px;color:var(--text-muted)">Credito: <strong style="color:var(--green)">${fmtS(ivaCred)}</strong></span>
-      <span style="font-size:13px;font-weight:600;color:${ivaSaldo>=0?'var(--red)':'var(--green)'}">
-        ${ivaSaldo>=0?'Da versare':'Credito'}: ${fmtS(Math.abs(ivaSaldo))}
-      </span>
-    </div>
+
     <div class="grid-2" style="margin-bottom:16px">
       <div class="card">
         <div class="card-title">📤 Fatture da Emettere ai Clienti</div>
