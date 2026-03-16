@@ -559,7 +559,7 @@ function buCostiAnno(buId,anno){
 function renderBusinessUnitDashboard(anno){
   const el=document.getElementById('dash-bu');
   if(!el)return;
-  if(state.businessUnit.length===0){el.innerHTML='<div class="text-muted" style="font-size:13px">Nessuna business unit. <a href="#" onclick="showView('businessunit')" style="color:var(--gold)">Aggiungine una →</a></div>';return;}
+  if(state.businessUnit.length===0){el.innerHTML='<div class="text-muted" style="font-size:13px">Nessuna business unit. <a href="#" onclick="showView(\'businessunit\')" style="color:var(--gold)">Aggiungine una →</a></div>';return;}
   const maxFat=Math.max(...state.businessUnit.map(b=>buFatturatoAnno(b.id,anno)),1);
   el.innerHTML=state.businessUnit.map(b=>{
     const fat=buFatturatoAnno(b.id,anno);
