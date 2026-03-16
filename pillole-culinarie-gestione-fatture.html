@@ -501,15 +501,6 @@ function totaleProfMese(prof,anno,mese){
   state.progetti.forEach(p=>{(p.costi||[]).forEach(c=>{if(c.profId==prof.id)tot+=costoOperatoreMese(c,p,anno,mese);});});
   return tot+compensiFissiMese(prof,anno,mese);
 }
-  let tot=0;
-  (prof.compensiFissi||[]).forEach(cf=>{let m=parseInt(cf.meseInizio),a=parseInt(cf.annoInizio),d=parseInt(cf.durata);for(let i=0;i<d;i++){if(a==anno&&m==mese){tot+=parseFloat(cf.importo)||0;break;}m++;if(m>12){m=1;a++;}}});
-  return tot;
-}
-function totaleProfMese(prof,anno,mese){
-  let tot=0;
-  state.progetti.forEach(p=>{if(progettoAttivo(p,anno,mese))(p.costi||[]).forEach(c=>{if(c.profId==prof.id)tot+=parseFloat(c.importo)||0;});});
-  return tot+compensiFissiMese(prof,anno,mese);
-}
 
 // Calcola costo fisso in un dato mese
 function costoFissoMese(cf,anno,mese){
