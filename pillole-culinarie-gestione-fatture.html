@@ -496,6 +496,14 @@ function costoOperatoreMese(c,p,anno,mese){
   return parseFloat(c.importo)||0;
 }
 function costiProgettoMese(p,anno,mese){return(p.costi||[]).reduce((a,c)=>a+costoOperatoreMese(c,p,anno,mese),0);}
+function compensiFissiMese(prof,anno,mese){
+  let tot=0;
+  (prof.compensiFissi||[]).forEach(cf=>{
+    let m=parseInt(cf.meseInizio),a=parseInt(cf.annoInizio),d=parseInt(cf.durata);
+    for(let i=0;i<d;i++){if(a==anno&&m==mese){tot+=parseFloat(cf.importo)||0;break;}m++;if(m>12){m=1;a++;}}
+  });
+  return tot;
+}
 function totaleProfMese(prof,anno,mese){
   let tot=0;
   state.progetti.forEach(p=>{(p.costi||[]).forEach(c=>{if(c.profId==prof.id)tot+=costoOperatoreMese(c,p,anno,mese);});});
