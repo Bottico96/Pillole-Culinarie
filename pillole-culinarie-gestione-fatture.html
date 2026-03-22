@@ -136,6 +136,7 @@ textarea{resize:vertical;min-height:60px;}select option{background:var(--surface
         <div class="nav-label">Panoramica</div>
         <div class="nav-item active" onclick="showView('dashboard')" id="nav-dashboard"><span class="nav-icon">◈</span> Dashboard</div>
         <div class="nav-item" onclick="showView('calendario')" id="nav-calendario"><span class="nav-icon">◷</span> Calendario Mensile</div>
+        <div class="nav-item" onclick="showView('cashflow')" id="nav-cashflow"><span class="nav-icon">⇄</span> Cash Flow</div>
       </div>
       <div class="nav-section">
         <div class="nav-label">Ricavi</div>
@@ -164,6 +165,11 @@ textarea{resize:vertical;min-height:60px;}select option{background:var(--surface
           <select id="dash-year" onchange="renderDashboard()" style="width:120px">
             <option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option>
           </select>
+          <div style="display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden">
+            <button id="btn-cons" onclick="setVista('cons')" style="padding:7px 16px;border:none;cursor:pointer;font-size:12px;font-weight:600;background:var(--gold);color:#fff;font-family:'DM Sans',sans-serif">✓ Consuntivo</button>
+            <button id="btn-bdg" onclick="setVista('bdg')" style="padding:7px 16px;border:none;cursor:pointer;font-size:12px;font-weight:500;background:transparent;color:var(--text-muted);font-family:'DM Sans',sans-serif">◎ Budget</button>
+            <button id="btn-tot" onclick="setVista('tot')" style="padding:7px 16px;border:none;cursor:pointer;font-size:12px;font-weight:500;background:transparent;color:var(--text-muted);font-family:'DM Sans',sans-serif">⊕ Totale</button>
+          </div>
         </div>
       </div>
       <div class="content">
@@ -226,6 +232,30 @@ textarea{resize:vertical;min-height:60px;}select option{background:var(--surface
       <div class="content">
         <div class="grid-3" id="rimborsi-stats" style="margin-bottom:20px"></div>
         <div id="rimborsi-list"></div>
+      </div>
+    </div>
+
+    <!-- CASH FLOW -->
+    <div id="view-cashflow" class="view-section hidden">
+      <div class="page-header">
+        <div class="page-title">Cash Flow</div>
+        <div class="page-sub">Entrate e uscite reali di cassa — quando i soldi entrano e escono davvero</div>
+        <div class="header-actions">
+          <select id="cf-year" onchange="renderCashFlow()" style="width:120px">
+            <option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option>
+          </select>
+          <button class="btn btn-primary" onclick="openModalMovimento()">＋ Movimento</button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="grid-4" id="cf-stats-top" style="margin-bottom:20px"></div>
+        <div id="cf-saldo-corrente" style="margin-bottom:20px"></div>
+        <div id="cf-chart" style="margin-bottom:20px"></div>
+        <div class="grid-2" style="margin-bottom:20px">
+          <div class="card"><div class="card-title">📅 Prossime Scadenze da Incassare</div><div id="cf-incassi"></div></div>
+          <div class="card"><div class="card-title">📅 Prossime Scadenze da Pagare</div><div id="cf-pagamenti"></div></div>
+        </div>
+        <div class="card"><div class="card-title">📒 Registro Movimenti</div><div id="cf-movimenti"></div></div>
       </div>
     </div>
 
@@ -315,6 +345,64 @@ textarea{resize:vertical;min-height:60px;}select option{background:var(--surface
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModalRimborso()">Annulla</button>
       <button class="btn btn-primary" onclick="saveRimborso()">Salva Spesa</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MOVIMENTO CASSA -->
+<div class="modal-overlay hidden" id="modal-movimento">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-title" id="modal-mov-title">Nuovo Movimento</div>
+    <div class="form-row">
+      <div class="form-group"><label>Tipo *</label>
+        <select id="mov-tipo" onchange="toggleMovTipo()">
+          <option value="entrata">💰 Entrata (incasso)</option>
+          <option value="uscita">💸 Uscita (pagamento)</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Data *</label>
+        <input type="date" id="mov-data">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Importo (€) *</label>
+        <input type="number" id="mov-importo" placeholder="es. 1830">
+      </div>
+      <div class="form-group"><label>Categoria</label>
+        <select id="mov-categoria">
+          <optgroup label="Entrate">
+            <option value="Incasso fattura cliente">Incasso fattura cliente</option>
+            <option value="Acconto cliente">Acconto cliente</option>
+            <option value="Rimborso">Rimborso ricevuto</option>
+          </optgroup>
+          <optgroup label="Uscite">
+            <option value="Pagamento collaboratore">Pagamento collaboratore</option>
+            <option value="Pagamento fornitore">Pagamento fornitore</option>
+            <option value="Costo fisso">Costo fisso aziendale</option>
+            <option value="Tasse e contributi">Tasse e contributi</option>
+            <option value="Rimborso spese">Rimborso spese collaboratore</option>
+            <option value="Altro">Altro</option>
+          </optgroup>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label>Descrizione *</label>
+      <input type="text" id="mov-desc" placeholder="es. Pagamento fattura n.12 — LOVE &amp; PASSION">
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Controparte</label>
+        <input type="text" id="mov-controparte" placeholder="es. LOVE &amp; PASSION Srl">
+      </div>
+      <div class="form-group"><label>Collega a progetto (opzionale)</label>
+        <select id="mov-progetto"><option value="">— Nessuno —</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>Note</label>
+      <input type="text" id="mov-note" placeholder="es. Bonifico ricevuto il giorno X">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModalMovimento()">Annulla</button>
+      <button class="btn btn-primary" onclick="saveMovimento()">Salva</button>
     </div>
   </div>
 </div>
@@ -586,8 +674,9 @@ textarea{resize:vertical;min-height:60px;}select option{background:var(--surface
 
 <script>
 const MESI=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
-let state={progetti:[],professionisti:[],costiFissi:[],businessUnit:[],rimborsi:[],nextIdP:1,nextIdProf:1,nextIdCF:1,nextIdBU:1,nextIdRimb:1};
+let state={progetti:[],professionisti:[],costiFissi:[],businessUnit:[],rimborsi:[],movimentiCassa:[],nextIdP:1,nextIdProf:1,nextIdCF:1,nextIdBU:1,nextIdRimb:1,nextIdMov:1};
 let editingProgettoId=null,editingProfId=null,editingCFId=null,editingBUId=null;
+let vistaCorrente='cons'; // 'cons' | 'bdg' | 'tot'
 let tempCosti=[],tempCompensi=[],tempScadenze=[],tempBUSplit=[];let editingCostoIdx=null;
 let selectedMonth=new Date().getMonth()+1;
 
@@ -915,6 +1004,357 @@ function deleteRimborso(id){
   saveState();renderRimborsi();
 }
 
+
+// ── CASH FLOW ─────────────────────────────────────────────────
+
+// Calcola saldo corrente cassa da tutti i movimenti registrati
+function saldoCassa(){
+  return state.movimentiCassa.reduce((tot,m)=>{
+    return tot+(m.tipo==='entrata'?parseFloat(m.importo)||0:-(parseFloat(m.importo)||0));
+  },0);
+}
+
+// Previsione entrate future: fatture emesse non ancora incassate
+function entrateAttese(anno){
+  const oggi=new Date();
+  const result=[];
+  state.progetti.forEach(p=>{
+    for(let m=1;m<=12;m++){
+      const f=fatturatoCliente(p,anno,m);
+      if(f<=0) continue;
+      // Stima data incasso: 60gg dalla data fattura (tipico B2B italiano)
+      const dataFattura=new Date(anno,m-1,28);
+      const dataIncasso=new Date(dataFattura.getTime()+60*24*60*60*1000);
+      // Controlla se già incassata (mov entrata collegato)
+      const giàIncassato=state.movimentiCassa.some(mv=>
+        mv.tipo==='entrata'&&mv.progettoId==p.id&&
+        new Date(mv.data).getFullYear()==anno&&new Date(mv.data).getMonth()+1==m
+      );
+      if(!giàIncassato){
+        result.push({
+          data:dataIncasso,
+          dataFattura:dataFattura,
+          cliente:p.cliente,
+          servizio:p.servizio,
+          importo:f,
+          importoIva:f*1.22,
+          progettoId:p.id,
+          mese:m,
+          anno:anno,
+          scaduta:dataIncasso<oggi
+        });
+      }
+    }
+  });
+  return result.sort((a,b)=>a.data-b.data);
+}
+
+// Previsione uscite future: costi operatori + fissi non ancora pagati
+function usciteAttese(anno){
+  const oggi=new Date();
+  const result=[];
+  // Costi operatori
+  state.professionisti.forEach(prof=>{
+    for(let m=1;m<=12;m++){
+      const tot=totaleProfMese(prof,anno,m);
+      if(tot<=0) continue;
+      const dataScad=new Date(anno,m,15); // 15 del mese successivo
+      const giàPagato=state.movimentiCassa.some(mv=>
+        mv.tipo==='uscita'&&mv.controparte&&
+        mv.controparte.toUpperCase().includes(prof.nome.split(' ')[0].toUpperCase())&&
+        new Date(mv.data).getFullYear()==anno&&new Date(mv.data).getMonth()+1==m
+      );
+      if(!giàPagato){
+        result.push({
+          data:dataScad, tipo:'operatore',
+          desc:prof.nome+' — '+MESI[m-1],
+          controparte:prof.nome,
+          importo:tot,
+          mese:m,anno:anno,
+          scaduta:dataScad<oggi
+        });
+      }
+    }
+  });
+  // Costi fissi
+  state.costiFissi.forEach(cf=>{
+    for(let m=1;m<=12;m++){
+      const imp=costoFissoMese(cf,anno,m);
+      if(imp<=0) continue;
+      const giorno=cf.giorno||1;
+      const dataScad=new Date(anno,m-1,giorno);
+      const giàPagato=state.movimentiCassa.some(mv=>
+        mv.tipo==='uscita'&&mv.desc&&mv.desc.includes(cf.descrizione)&&
+        new Date(mv.data).getFullYear()==anno&&new Date(mv.data).getMonth()+1==m
+      );
+      if(!giàPagato){
+        result.push({
+          data:dataScad, tipo:'fisso',
+          desc:cf.descrizione,
+          controparte:cf.fornitore,
+          importo:applyIva(imp,parseFloat(cf.iva)||0),
+          mese:m,anno:anno,
+          scaduta:dataScad<oggi
+        });
+      }
+    }
+  });
+  return result.sort((a,b)=>a.data-b.data);
+}
+
+// Cash flow mensile previsionale: entrate - uscite per mese
+function cashFlowMensile(anno){
+  const mesi=Array.from({length:12},(_,i)=>({
+    mese:i+1,entrate:0,uscite:0,
+    entrateReali:0,usciteReali:0
+  }));
+  // Movimenti reali
+  state.movimentiCassa.forEach(mv=>{
+    const d=new Date(mv.data+'T00:00:00');
+    if(d.getFullYear()!==anno) return;
+    const m=d.getMonth();
+    const imp=parseFloat(mv.importo)||0;
+    if(mv.tipo==='entrata'){mesi[m].entrateReali+=imp;}
+    else{mesi[m].usciteReali+=imp;}
+  });
+  // Previsioni (competenza)
+  for(let m=1;m<=12;m++){
+    let totF=0;
+    state.progetti.forEach(p=>totF+=fatturatoCliente(p,anno,m));
+    mesi[m-1].entrate=totF*1.22; // con IVA
+    let totC=0;
+    state.professionisti.forEach(prof=>totC+=totaleProfMese(prof,anno,m));
+    state.costiFissi.forEach(cf=>{
+      const imp=costoFissoMese(cf,anno,m);
+      totC+=applyIva(imp,parseFloat(cf.iva)||0);
+    });
+    mesi[m-1].uscite=totC;
+  }
+  return mesi;
+}
+
+function renderCashFlow(){
+  const anno=parseInt(document.getElementById('cf-year').value);
+  const oggi=new Date();
+  const saldo=saldoCassa();
+  const mesiCF=cashFlowMensile(anno);
+
+  // Totali anno
+  const totEntrateReali=mesiCF.reduce((a,m)=>a+m.entrateReali,0);
+  const totUsciteReali=mesiCF.reduce((a,m)=>a+m.usciteReali,0);
+  const totEntrateAttese=mesiCF.reduce((a,m)=>a+m.entrate,0);
+  const totUsciteAttese=mesiCF.reduce((a,m)=>a+m.uscite,0);
+
+  // Stats top
+  document.getElementById('cf-stats-top').innerHTML=`
+    <div class="stat-card gold">
+      <div class="stat-label">Saldo Cassa Attuale</div>
+      <div class="stat-value" style="color:${saldo>=0?'var(--green)':'var(--red)'}">${fmtS(saldo)}</div>
+      <div class="stat-note">${state.movimentiCassa.length} movimenti registrati</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-label">Incassato ${anno}</div>
+      <div class="stat-value">${fmtS(totEntrateReali)}</div>
+      <div class="stat-note">Entrate reali registrate</div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-label">Pagato ${anno}</div>
+      <div class="stat-value">${fmtS(totUsciteReali)}</div>
+      <div class="stat-note">Uscite reali registrate</div>
+    </div>
+    <div class="stat-card ${(totEntrateAttese-totUsciteAttese)>=0?'':'red'}">
+      <div class="stat-label">CF Previsionale ${anno}</div>
+      <div class="stat-value" style="color:${(totEntrateAttese-totUsciteAttese)>=0?'var(--green)':'var(--red)'}">${fmtS(totEntrateAttese-totUsciteAttese)}</div>
+      <div class="stat-note">Entrate − Uscite previste</div>
+    </div>`;
+
+  // Saldo corrente box
+  const entr30=entrateAttese(anno).filter(e=>e.data<=new Date(oggi.getTime()+30*24*60*60*1000)&&e.data>=oggi);
+  const usc30=usciteAttese(anno).filter(u=>u.data<=new Date(oggi.getTime()+30*24*60*60*1000)&&u.data>=oggi);
+  const totEntr30=entr30.reduce((a,e)=>a+e.importoIva,0);
+  const totUsc30=usc30.reduce((a,u)=>a+u.importo,0);
+  const saldoFut=saldo+totEntr30-totUsc30;
+
+  document.getElementById('cf-saldo-corrente').innerHTML=`
+    <div class="card" style="border-left:4px solid ${saldoFut>=0?'var(--green)':'var(--red)'}">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px">
+        <div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600">
+            Proiezione a 30 giorni
+          </div>
+          <div style="font-size:12px;color:var(--text-dim);margin-top:2px">
+            Saldo attuale + entrate attese − uscite previste nei prossimi 30gg
+          </div>
+        </div>
+        <div style="display:flex;gap:28px;flex-wrap:wrap;align-items:center">
+          <div style="text-align:center">
+            <div style="font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.08em">Saldo ora</div>
+            <div style="font-size:20px;font-family:'Cormorant Garamond',serif;font-weight:600;color:${saldo>=0?'var(--green)':'var(--red)'}">${fmtS(saldo)}</div>
+          </div>
+          <div style="font-size:20px;color:var(--text-dim)">+</div>
+          <div style="text-align:center">
+            <div style="font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.08em">Entrate 30gg</div>
+            <div style="font-size:20px;font-family:'Cormorant Garamond',serif;font-weight:600;color:var(--green)">${fmtS(totEntr30)}</div>
+          </div>
+          <div style="font-size:20px;color:var(--text-dim)">−</div>
+          <div style="text-align:center">
+            <div style="font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.08em">Uscite 30gg</div>
+            <div style="font-size:20px;font-family:'Cormorant Garamond',serif;font-weight:600;color:var(--red)">${fmtS(totUsc30)}</div>
+          </div>
+          <div style="font-size:20px;color:var(--text-dim)">=</div>
+          <div style="text-align:center">
+            <div style="font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.08em">Proiezione</div>
+            <div style="font-size:24px;font-family:'Cormorant Garamond',serif;font-weight:700;color:${saldoFut>=0?'var(--green)':'var(--red)'}">${fmtS(saldoFut)}</div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  // Chart mensile
+  const maxVal=Math.max(...mesiCF.map(m=>Math.max(m.entrate,m.uscite,m.entrateReali,m.usciteReali)),1);
+  let chartRows=mesiCF.map((m,i)=>{
+    const meseName=MESI[i].slice(0,3);
+    const isFuturo=new Date(anno,i+1,1)>oggi;
+    const saldoMese=m.entrateReali-m.usciteReali+(isFuturo?m.entrate-m.uscite:0);
+    return`<div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px">
+      <div style="font-size:9px;color:var(--text-dim);font-weight:600">${saldoMese>=0?'+':'-'}${Math.abs(Math.round(saldoMese/1000))}k</div>
+      <div style="width:100%;position:relative;height:80px;display:flex;align-items:flex-end;gap:1px">
+        <div title="Entrate previste" style="flex:1;background:rgba(45,122,58,0.2);border-radius:3px 3px 0 0;height:${Math.max(m.entrate/maxVal*80,1)}px;${!isFuturo?'opacity:0.3':''}"></div>
+        <div title="Entrate reali" style="flex:1;background:var(--green);border-radius:3px 3px 0 0;height:${Math.max(m.entrateReali/maxVal*80,m.entrateReali>0?2:0)}px"></div>
+        <div title="Uscite previste" style="flex:1;background:rgba(192,57,43,0.2);border-radius:3px 3px 0 0;height:${Math.max(m.uscite/maxVal*80,1)}px;${!isFuturo?'opacity:0.3':''}"></div>
+        <div title="Uscite reali" style="flex:1;background:var(--red);border-radius:3px 3px 0 0;height:${Math.max(m.usciteReali/maxVal*80,m.usciteReali>0?2:0)}px"></div>
+      </div>
+      <div style="font-size:10px;color:${isFuturo?'var(--text-dim)':'var(--text)'}">${meseName}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('cf-chart').innerHTML=`<div class="card">
+    <div class="card-title">Andamento Mensile Cash Flow ${anno}</div>
+    <div style="display:flex;gap:12px;margin-bottom:10px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:5px;font-size:11px"><div style="width:12px;height:12px;background:rgba(45,122,58,0.2);border-radius:2px"></div>Entrate previste</div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:11px"><div style="width:12px;height:12px;background:var(--green);border-radius:2px"></div>Entrate reali</div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:11px"><div style="width:12px;height:12px;background:rgba(192,57,43,0.2);border-radius:2px"></div>Uscite previste</div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:11px"><div style="width:12px;height:12px;background:var(--red);border-radius:2px"></div>Uscite reali</div>
+    </div>
+    <div style="display:flex;gap:4px;align-items:flex-end;height:110px;padding-bottom:4px">${chartRows}</div>
+  </div>`;
+
+  // Prossime scadenze da incassare
+  const entrAtt=entrateAttese(anno).slice(0,8);
+  document.getElementById('cf-incassi').innerHTML=entrAtt.length===0
+    ?'<div style="color:var(--text-muted);font-size:13px">Nessuna entrata attesa.</div>'
+    :entrAtt.map(e=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+        <div style="flex:1">
+          <div style="font-weight:500;font-size:13px">${e.cliente}</div>
+          <div style="font-size:11px;color:var(--text-muted)">${e.servizio.slice(0,40)} — ${MESI[e.mese-1]}</div>
+          <div style="font-size:11px;color:${e.scaduta?'var(--red)':'var(--text-dim)'}">
+            ${e.scaduta?'⚠ Scaduta':'📅'} Incasso stimato: ${e.data.toLocaleDateString('it-IT')}
+          </div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;margin-left:12px">
+          <div style="font-weight:600;color:var(--green)">${fmt(e.importoIva)}</div>
+          <div style="font-size:11px;color:var(--text-dim)">IVA inclusa</div>
+        </div>
+      </div>`).join('');
+
+  // Prossime scadenze da pagare
+  const uscAtt=usciteAttese(anno).slice(0,8);
+  document.getElementById('cf-pagamenti').innerHTML=uscAtt.length===0
+    ?'<div style="color:var(--text-muted);font-size:13px">Nessuna uscita attesa.</div>'
+    :uscAtt.map(u=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+        <div style="flex:1">
+          <div style="font-weight:500;font-size:13px">${u.desc}</div>
+          <div style="font-size:11px;color:var(--text-muted)">${u.controparte}</div>
+          <div style="font-size:11px;color:${u.scaduta?'var(--red)':'var(--text-dim)'}">
+            ${u.scaduta?'⚠ Scaduta':'📅'} Scadenza: ${u.data.toLocaleDateString('it-IT')}
+          </div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;margin-left:12px">
+          <div style="font-weight:600;color:var(--red)">${fmt(u.importo)}</div>
+          <div style="font-size:11px;color:var(--text-dim)">${u.tipo==='fisso'?'Costo fisso':'Operatore'}</div>
+        </div>
+      </div>`).join('');
+
+  // Registro movimenti
+  const movOrd=[...state.movimentiCassa].sort((a,b)=>new Date(b.data)-new Date(a.data));
+  if(movOrd.length===0){
+    document.getElementById('cf-movimenti').innerHTML=`<div style="color:var(--text-muted);font-size:13px;padding:20px 0;text-align:center">
+      Nessun movimento registrato.<br>
+      <span style="font-size:12px">Aggiungi i movimenti reali di cassa per calcolare il saldo effettivo.</span>
+    </div>`;
+  } else {
+    let saldoProgressivo=0;
+    const righe=[...state.movimentiCassa].sort((a,b)=>new Date(a.data)-new Date(b.data)).map(m=>{
+      const imp=parseFloat(m.importo)||0;
+      saldoProgressivo+=m.tipo==='entrata'?imp:-imp;
+      return{...m,saldoProgressivo};
+    }).reverse();
+    document.getElementById('cf-movimenti').innerHTML=`<div class="table-wrap"><table>
+      <thead><tr><th>Data</th><th>Tipo</th><th>Descrizione</th><th>Controparte</th><th>Categoria</th><th class="text-right">Importo</th><th class="text-right">Saldo</th><th></th></tr></thead>
+      <tbody>
+        ${righe.map(m=>`<tr>
+          <td style="white-space:nowrap;font-size:12px;color:var(--text-dim)">${fmtDate(m.data)}</td>
+          <td><span class="badge ${m.tipo==='entrata'?'badge-green':'badge-red'}">${m.tipo==='entrata'?'💰 Entrata':'💸 Uscita'}</span></td>
+          <td>${m.desc}${m.note?'<div style="font-size:11px;color:var(--text-dim)">'+m.note+'</div>':''}</td>
+          <td style="font-size:12px;color:var(--text-muted)">${m.controparte||'—'}</td>
+          <td style="font-size:12px"><span class="badge badge-blue">${m.categoria||'—'}</span></td>
+          <td class="text-right fw-500" style="color:${m.tipo==='entrata'?'var(--green)':'var(--red)'}">
+            ${m.tipo==='entrata'?'+':'−'}${fmt(parseFloat(m.importo)||0)}
+          </td>
+          <td class="text-right" style="color:${m.saldoProgressivo>=0?'var(--green)':'var(--red)'}">
+            ${fmtS(m.saldoProgressivo)}
+          </td>
+          <td><button class="delete-btn" onclick="deleteMovimento(${m.id})">✕</button></td>
+        </tr>`).join('')}
+      </tbody>
+    </table></div>`;
+  }
+}
+
+// ── MODAL MOVIMENTO ───────────────────────────────────────────
+let editingMovId=null;
+function openModalMovimento(){
+  editingMovId=null;
+  document.getElementById('modal-mov-title').textContent='Nuovo Movimento';
+  document.getElementById('mov-data').value=new Date().toISOString().split('T')[0];
+  document.getElementById('mov-importo').value='';
+  document.getElementById('mov-desc').value='';
+  document.getElementById('mov-controparte').value='';
+  document.getElementById('mov-note').value='';
+  document.getElementById('mov-tipo').value='entrata';
+  document.getElementById('mov-categoria').value='Incasso fattura cliente';
+  document.getElementById('mov-progetto').innerHTML='<option value="">— Nessuno —</option>'+
+    state.progetti.map(p=>`<option value="${p.id}">${p.cliente} – ${p.servizio.slice(0,30)}</option>`).join('');
+  document.getElementById('modal-movimento').classList.remove('hidden');
+}
+function closeModalMovimento(){document.getElementById('modal-movimento').classList.add('hidden');}
+function toggleMovTipo(){}
+function saveMovimento(){
+  const importo=parseFloat(document.getElementById('mov-importo').value);
+  const desc=document.getElementById('mov-desc').value.trim();
+  if(!importo||!desc){alert('Compila importo e descrizione.');return;}
+  const obj={
+    id:editingMovId||state.nextIdMov++,
+    tipo:document.getElementById('mov-tipo').value,
+    data:document.getElementById('mov-data').value,
+    importo,desc,
+    controparte:document.getElementById('mov-controparte').value.trim(),
+    categoria:document.getElementById('mov-categoria').value,
+    progettoId:parseInt(document.getElementById('mov-progetto').value)||null,
+    note:document.getElementById('mov-note').value.trim()
+  };
+  if(editingMovId)state.movimentiCassa[state.movimentiCassa.findIndex(x=>x.id===editingMovId)]=obj;
+  else state.movimentiCassa.push(obj);
+  saveState();closeModalMovimento();renderCashFlow();
+}
+function deleteMovimento(id){
+  if(!confirm('Eliminare questo movimento?'))return;
+  state.movimentiCassa=state.movimentiCassa.filter(x=>x.id!==id);
+  saveState();renderCashFlow();
+}
+
 // ── NAVIGATION ────────────────────────────────────────────────
 function showView(v){
   document.querySelectorAll('.view-section').forEach(el=>el.classList.add('hidden'));
@@ -928,6 +1368,7 @@ function showView(v){
   if(v==='costifissi')renderCostiFissi();
   if(v==='businessunit')renderBusinessUnit();
   if(v==='rimborsi')renderRimborsi();
+  if(v==='cashflow')renderCashFlow();
 }
 
 // ── UTILS ─────────────────────────────────────────────────────
@@ -1146,19 +1587,84 @@ function saldoIvaAnno(anno){
   return{debito:deb,credito:cred,saldo:deb-cred};
 }
 
+function setVista(v){
+  vistaCorrente=v;
+  ['cons','bdg','tot'].forEach(id=>{
+    const btn=document.getElementById('btn-'+id);
+    if(!btn) return;
+    if(id===v){btn.style.background='var(--gold)';btn.style.color='#fff';btn.style.fontWeight='600';}
+    else{btn.style.background='transparent';btn.style.color='var(--text-muted)';btn.style.fontWeight='500';}
+  });
+  renderDashboard();
+}
+
+// Filtra importo in base a vista corrente e flag bdg_cons della voce
+function importoFiltrato(importo, bdg_cons){
+  if(vistaCorrente==='tot') return importo;
+  if(vistaCorrente==='cons') return bdg_cons==='cons' ? importo : 0;
+  if(vistaCorrente==='bdg') return bdg_cons==='bdg'||bdg_cons==='budget' ? importo : 0;
+  return importo;
+}
+
+// Versione filtrata di fatturatoCliente
+function fatturatoClienteFiltrato(p,anno,mese){
+  if(p.tipo==='spot'){
+    if(!p.scadenze||p.scadenze.length===0){
+      if(anno!=parseInt(p.annoInizio)||mese!=parseInt(p.meseInizio)) return 0;
+      return importoFiltrato(parseFloat(p.importo)||0, 'bdg');
+    }
+    return p.scadenze.filter(sc=>{
+      if(!sc.data) return false;
+      const d=new Date(sc.data+'T00:00:00');
+      return d.getFullYear()==anno&&d.getMonth()+1==mese;
+    }).reduce((a,sc)=>a+importoFiltrato(parseFloat(sc.importo)||0, sc.bdg_cons||'bdg'),0);
+  }
+  if(!progettoAttivo(p,anno,mese)) return 0;
+  // Ricorrente: è consuntivo se il mese è in mesiConsuntivati
+  const mesiCons = p.mesiConsuntivati||[];
+  const bdg_cons = mesiCons.includes(mese) ? 'cons' : 'bdg';
+  return importoFiltrato(parseFloat(p.importo)||0, bdg_cons);
+}
+
+// Versione filtrata costo operatore
+function costoOperatoreFiltrato(c,p,anno,mese){
+  const imp = costoOperatoreMese(c,p,anno,mese);
+  if(imp<=0) return 0;
+  return importoFiltrato(imp, c.bdg_cons||'bdg');
+}
+
+// Versione filtrata costi fissi
+function costiFissiMeseFiltrato(anno,mese){
+  return state.costiFissi.reduce((tot,cf)=>{
+    const imp=costoFissoMese(cf,anno,mese);
+    if(imp<=0) return tot;
+    const mesiCons=cf.mesiConsuntivati||[];
+    const bdg_cons=mesiCons.includes(mese)?'cons':'bdg';
+    return tot+importoFiltrato(imp, bdg_cons);
+  },0);
+}
+
 // ── DASHBOARD ─────────────────────────────────────────────────
 function renderDashboard(){
   const anno=parseInt(document.getElementById('dash-year').value);
+  const vistaLabel=vistaCorrente==='cons'?'Consuntivo':vistaCorrente==='bdg'?'Budget':'Totale (Cons+Bdg)';
   let totF=0,totCOp=0,totCF=0,byCliente={},byProf={},byMese=Array(12).fill(0);
-  state.progetti.forEach(p=>{for(let m=1;m<=12;m++){const f=fatturatoCliente(p,anno,m);totF+=f;byMese[m-1]+=f;if(f>0)byCliente[p.cliente]=(byCliente[p.cliente]||0)+f;}});
-  state.professionisti.forEach(prof=>{let t=0;for(let m=1;m<=12;m++)t+=totaleProfMese(prof,anno,m);totCOp+=t;if(t>0)byProf[prof.nome]=(byProf[prof.nome]||0)+t;});
-  for(let m=1;m<=12;m++)totCF+=totaleCostiFissiMese(anno,m);
+  state.progetti.forEach(p=>{for(let m=1;m<=12;m++){const f=fatturatoClienteFiltrato(p,anno,m);totF+=f;byMese[m-1]+=f;if(f>0)byCliente[p.cliente]=(byCliente[p.cliente]||0)+f;}});
+  state.professionisti.forEach(prof=>{
+    let t=0;
+    for(let m=1;m<=12;m++){
+      state.progetti.forEach(p=>{(p.costi||[]).forEach(c=>{if(c.profId==prof.id)t+=costoOperatoreFiltrato(c,p,anno,m);});});
+      t+=compensiFissiMese(prof,anno,m);
+    }
+    totCOp+=t;if(t>0)byProf[prof.nome]=(byProf[prof.nome]||0)+t;
+  });
+  for(let m=1;m<=12;m++)totCF+=costiFissiMeseFiltrato(anno,m);
   const totCosti=totCOp+totCF;
   const mg=totF-totCosti;
   const iva=saldoIvaAnno(anno);
 
   document.getElementById('dash-stats').innerHTML=`
-    <div class="stat-card gold"><div class="stat-label">Fatturato ${anno}</div><div class="stat-value">${fmtS(totF)}</div><div class="stat-note">+ IVA 22% ≈ ${fmtS(totF*1.22)}</div></div>
+    <div class="stat-card gold"><div class="stat-label">Fatturato ${anno} — ${vistaLabel}</div><div class="stat-value">${fmtS(totF)}</div><div class="stat-note">+ IVA 22% ≈ ${fmtS(totF*1.22)}</div></div>
     <div class="stat-card red"><div class="stat-label">Costi Operatori</div><div class="stat-value">${fmtS(totCOp)}</div><div class="stat-note">Professionisti e collaboratori</div></div>
     <div class="stat-card purple"><div class="stat-label">Costi Fissi</div><div class="stat-value">${fmtS(totCF)}</div><div class="stat-note">${state.costiFissi.length} voci attive</div></div>
     <div class="stat-card ${mg>=0?'green':'red'}"><div class="stat-label">Margine Netto</div><div class="stat-value">${fmtS(mg)}</div><div class="stat-note">${totF>0?Math.round(mg/totF*100):0}% del fatturato</div></div>
@@ -1679,41 +2185,21 @@ function closeModalEmail(){document.getElementById('modal-email').classList.add(
 // ── SAMPLE DATA ───────────────────────────────────────────────
 function loadSampleData(){
   if(state.professionisti.length>0&&state.businessUnit.length>0)return;
-  // Init BU if missing
-  if(state.businessUnit.length===0){
-    state.businessUnit=[
-      {id:1,nome:'Comunicazione',colore:'#c9a96e',descrizione:'Ufficio stampa e PR'},
-      {id:2,nome:'Social Media',colore:'#6a8ab0',descrizione:'Gestione canali social'},
-      {id:3,nome:'Grafica & Video',colore:'#9a7ab0',descrizione:'Produzione visiva e video'},
-    ];
-    state.nextIdBU=4;
-    saveState();
-  }
-  if(state.professionisti.length>0)return;
-  state.professionisti=[
-    {id:1,nome:'Marco Bianchi',ruolo:'Videomaker',email:'marco@email.it',piva:'12345678901',note:'+39 333 1234567',compensiFissi:[]},
-    {id:2,nome:'Sara Conti',ruolo:'Resp. Comunicazione',email:'sara@email.it',piva:'98765432100',note:'',compensiFissi:[{importo:800,meseInizio:'1',annoInizio:'2026',durata:12}]},
-    {id:3,nome:'Luca Ferri',ruolo:'Social Media Manager',email:'luca@email.it',piva:'11223344556',note:'',compensiFissi:[]},
-  ];
-  state.nextIdProf=4;
-  state.progetti=[
-    {id:1,cliente:'Ristorante Pincopallino',servizio:'Comunicazione + Ufficio Stampa',tipo:'ricorrente',importo:1300,meseInizio:1,annoInizio:2026,durata:6,scadenze:[],buSplit:[{buId:1,importo:900},{buId:3,importo:400}],costi:[{profId:1,importo:200,iva:22,tipo:'mensile',buId:3},{profId:2,importo:100,iva:0,tipo:'mensile',buId:1}]},
-    {id:2,cliente:'Trattoria Da Nonna',servizio:'Social Media Management',tipo:'ricorrente',importo:800,meseInizio:2,annoInizio:2026,durata:12,scadenze:[],buSplit:[{buId:2,importo:800}],costi:[{profId:3,importo:250,iva:22,tipo:'mensile',buId:2}]},
-    {id:3,cliente:'Chef Academy Milano',servizio:'Campagna Lancio Corso Online',tipo:'spot',importo:3500,meseInizio:3,annoInizio:2026,durata:1,scadenze:[{desc:"50% all'accettazione",importo:1750,data:'2026-03-10'},{desc:'50% alla consegna',importo:1750,data:'2026-04-30'}],buSplit:[{buId:3,importo:2000},{buId:1,importo:1500}],costi:[{profId:1,importo:800,iva:22,tipo:'unatantum',mese:3,anno:2026,buId:3},{profId:3,importo:400,iva:0,tipo:'unatantum',mese:4,anno:2026,buId:1}]},
-  ];
-  state.nextIdP=4;
-  state.costiFissi=[
-    {id:1,descrizione:'Affitto ufficio',categoria:'Ufficio & Sede',importo:1200,iva:22,fornitore:'Mario Proprietario',ricorrenza:'mensile',ogni:1,meseInizio:1,annoInizio:2026,durata:null,giorno:1},
-    {id:2,descrizione:'Adobe Creative Cloud',categoria:'Software & Abbonamenti',importo:85,iva:22,fornitore:'Adobe Inc.',ricorrenza:'mensile',ogni:1,meseInizio:1,annoInizio:2026,durata:null,giorno:15},
-    {id:3,descrizione:'Bolletta elettrica',categoria:'Utenze',importo:180,iva:10,fornitore:'Enel',ricorrenza:'mensile',ogni:1,meseInizio:1,annoInizio:2026,durata:null,giorno:20},
-    {id:4,descrizione:'Revisione contabile annuale',categoria:'Consulenze',importo:2500,iva:22,fornitore:'Studio Bianchi & Associati',ricorrenza:'unatantum',ogni:1,meseInizio:4,annoInizio:2026,durata:1,giorno:30},
-    {id:5,descrizione:'Hosting & Domini',categoria:'Software & Abbonamenti',importo:150,iva:22,fornitore:'Aruba',ricorrenza:'custom',ogni:12,meseInizio:1,annoInizio:2026,durata:36,giorno:1},
-    {id:6,descrizione:'Manutenzione stampante',categoria:'Attrezzatura',importo:120,iva:22,fornitore:'TechService',ricorrenza:'custom',ogni:3,meseInizio:3,annoInizio:2026,durata:12,giorno:null},
-  ];
-  state.nextIdCF=7;
+  const realData={"progetti":[{"id":1,"cliente":"CATTOLICA  - Dish er","servizio":"Identità grafica","tipo":"spot","importo":860.0,"meseInizio":2,"annoInizio":2026,"durata":1,"scadenze":[{"desc":"Identità grafica","importo":860.0,"data":"2026-02-03","bdg_cons":"cons"}],"buSplit":[{"buId":5,"importo":860.0}],"costi":[]},{"id":2,"cliente":"ADG Ambasciatori del Gusto","servizio":"Progetto Let's Eat 2025-2026 - Tappa Ferrara 19.01","tipo":"spot","importo":1000.0,"meseInizio":1,"annoInizio":2026,"durata":1,"scadenze":[{"desc":"Progetto Let's Eat 2025-2026 - Tappa Ferrara 19.01.2026","importo":1000.0,"data":"2026-01-30","bdg_cons":"cons"}],"buSplit":[{"buId":3,"importo":1000.0}],"costi":[]},{"id":3,"cliente":"LOVE & PASSION Srl","servizio":"Comunicazione","tipo":"ricorrente","importo":1700,"meseInizio":1,"annoInizio":2026,"durata":12,"scadenze":[],"buSplit":[{"buId":1,"importo":566.67},{"buId":2,"importo":425.0},{"buId":5,"importo":283.33},{"buId":3,"importo":452.0},{"buId":4,"importo":31.33}],"costi":[{"profId":3,"importo":100.0,"iva":22,"tipo":"mensile","mese":1,"anno":2026,"buId":1,"bdg_cons":"cons"},{"profId":5,"importo":300.0,"iva":22,"tipo":"mensile","mese":1,"anno":2026,"buId":2,"bdg_cons":"cons"},{"profId":4,"importo":351.8,"iva":22,"tipo":"mensile","mese":1,"anno":2026,"buId":1,"bdg_cons":"cons"},{"profId":14,"importo":400.0,"iva":22,"tipo":"mensile","mese":1,"anno":2026,"buId":5,"bdg_cons":"cons"},{"profId":7,"importo":650.0,"iva":22,"tipo":"mensile","mese":1,"anno":2026,"buId":3,"bdg_cons":"cons"},{"profId":3,"importo":100.0,"iva":22,"tipo":"mensile","mese":2,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":5,"importo":300.0,"iva":22,"tipo":"mensile","mese":2,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":4,"importo":300.0,"iva":22,"tipo":"mensile","mese":2,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":14,"importo":50.0,"iva":22,"tipo":"mensile","mese":2,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":7,"importo":350.0,"iva":22,"tipo":"mensile","mese":2,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":100.0,"iva":22,"tipo":"mensile","mese":3,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":300.0,"iva":22,"tipo":"mensile","mese":3,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":4,"importo":300.0,"iva":22,"tipo":"mensile","mese":3,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":14,"importo":50.0,"iva":22,"tipo":"mensile","mese":3,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":7,"importo":350.0,"iva":22,"tipo":"mensile","mese":3,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":100.0,"iva":22,"tipo":"mensile","mese":4,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":5,"importo":300.0,"iva":22,"tipo":"mensile","mese":4,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":4,"importo":300.0,"iva":22,"tipo":"mensile","mese":4,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":14,"importo":400.0,"iva":22,"tipo":"mensile","mese":4,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":7,"importo":650.0,"iva":22,"tipo":"mensile","mese":4,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":100.0,"iva":22,"tipo":"mensile","mese":5,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":300.0,"iva":22,"tipo":"mensile","mese":5,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":4,"importo":300.0,"iva":22,"tipo":"mensile","mese":5,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":14,"importo":50.0,"iva":22,"tipo":"mensile","mese":5,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":7,"importo":350.0,"iva":22,"tipo":"mensile","mese":5,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":100.0,"iva":22,"tipo":"mensile","mese":6,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":5,"importo":300.0,"iva":22,"tipo":"mensile","mese":6,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":4,"importo":300.0,"iva":22,"tipo":"mensile","mese":6,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":14,"importo":50.0,"iva":22,"tipo":"mensile","mese":6,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":7,"importo":350.0,"iva":22,"tipo":"mensile","mese":6,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":100.0,"iva":22,"tipo":"mensile","mese":7,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":300.0,"iva":22,"tipo":"mensile","mese":7,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":4,"importo":300.0,"iva":22,"tipo":"mensile","mese":7,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":14,"importo":50.0,"iva":22,"tipo":"mensile","mese":7,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":7,"importo":350.0,"iva":22,"tipo":"mensile","mese":7,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":100.0,"iva":22,"tipo":"mensile","mese":8,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":5,"importo":300.0,"iva":22,"tipo":"mensile","mese":8,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":4,"importo":300.0,"iva":22,"tipo":"mensile","mese":8,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":14,"importo":50.0,"iva":22,"tipo":"mensile","mese":8,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":7,"importo":350.0,"iva":22,"tipo":"mensile","mese":8,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":100.0,"iva":22,"tipo":"mensile","mese":9,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":300.0,"iva":22,"tipo":"mensile","mese":9,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":4,"importo":300.0,"iva":22,"tipo":"mensile","mese":9,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":14,"importo":50.0,"iva":22,"tipo":"mensile","mese":9,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":7,"importo":350.0,"iva":22,"tipo":"mensile","mese":9,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":100.0,"iva":22,"tipo":"mensile","mese":10,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":5,"importo":300.0,"iva":22,"tipo":"mensile","mese":10,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":4,"importo":300.0,"iva":22,"tipo":"mensile","mese":10,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":14,"importo":50.0,"iva":22,"tipo":"mensile","mese":10,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":7,"importo":350.0,"iva":22,"tipo":"mensile","mese":10,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":100.0,"iva":22,"tipo":"mensile","mese":11,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":300.0,"iva":22,"tipo":"mensile","mese":11,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":4,"importo":300.0,"iva":22,"tipo":"mensile","mese":11,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":14,"importo":50.0,"iva":22,"tipo":"mensile","mese":11,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":7,"importo":350.0,"iva":22,"tipo":"mensile","mese":11,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":100.0,"iva":22,"tipo":"mensile","mese":12,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":5,"importo":300.0,"iva":22,"tipo":"mensile","mese":12,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":4,"importo":300.0,"iva":22,"tipo":"mensile","mese":12,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":14,"importo":50.0,"iva":22,"tipo":"mensile","mese":12,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":7,"importo":350.0,"iva":22,"tipo":"mensile","mese":12,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":15,"importo":150.0,"iva":22,"tipo":"mensile","mese":1,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":15,"importo":150.0,"iva":22,"tipo":"mensile","mese":2,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":15,"importo":150.0,"iva":22,"tipo":"mensile","mese":3,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":15,"importo":150.0,"iva":22,"tipo":"mensile","mese":4,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":15,"importo":150.0,"iva":22,"tipo":"mensile","mese":5,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":15,"importo":150.0,"iva":22,"tipo":"mensile","mese":6,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":15,"importo":150.0,"iva":22,"tipo":"mensile","mese":7,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":15,"importo":150.0,"iva":22,"tipo":"mensile","mese":8,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":15,"importo":150.0,"iva":22,"tipo":"mensile","mese":9,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":15,"importo":150.0,"iva":22,"tipo":"mensile","mese":10,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":15,"importo":150.0,"iva":22,"tipo":"mensile","mese":11,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":15,"importo":150.0,"iva":22,"tipo":"mensile","mese":12,"anno":2026,"buId":5,"bdg_cons":"bdg"}],"mesiConsuntivati":[1]},{"id":4,"cliente":"FROSCH consulting srls","servizio":"Comunicazione","tipo":"ricorrente","importo":1500,"meseInizio":1,"annoInizio":2026,"durata":12,"scadenze":[],"buSplit":[{"buId":1,"importo":375.0},{"buId":2,"importo":375.0},{"buId":5,"importo":375.0},{"buId":3,"importo":412.58},{"buId":4,"importo":62.42}],"costi":[{"profId":7,"importo":350.0,"iva":22,"tipo":"mensile","mese":1,"anno":2026,"buId":3,"bdg_cons":"cons"},{"profId":3,"importo":100.0,"iva":22,"tipo":"mensile","mese":1,"anno":2026,"buId":1,"bdg_cons":"cons"},{"profId":6,"importo":150.0,"iva":22,"tipo":"mensile","mese":1,"anno":2026,"buId":1,"bdg_cons":"cons"},{"profId":5,"importo":200.0,"iva":22,"tipo":"mensile","mese":1,"anno":2026,"buId":2,"bdg_cons":"cons"},{"profId":14,"importo":300.0,"iva":22,"tipo":"mensile","mese":1,"anno":2026,"buId":5,"bdg_cons":"cons"},{"profId":7,"importo":350.0,"iva":22,"tipo":"mensile","mese":2,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":100.0,"iva":22,"tipo":"mensile","mese":2,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":6,"importo":150.0,"iva":22,"tipo":"mensile","mese":2,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":200.0,"iva":22,"tipo":"mensile","mese":2,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":14,"importo":300.0,"iva":22,"tipo":"mensile","mese":2,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":7,"importo":350.0,"iva":22,"tipo":"mensile","mese":3,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":100.0,"iva":22,"tipo":"mensile","mese":3,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":6,"importo":150.0,"iva":22,"tipo":"mensile","mese":3,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":200.0,"iva":22,"tipo":"mensile","mese":3,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":14,"importo":300.0,"iva":22,"tipo":"mensile","mese":3,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":7,"importo":650.0,"iva":22,"tipo":"mensile","mese":4,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":100.0,"iva":22,"tipo":"mensile","mese":4,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":6,"importo":150.0,"iva":22,"tipo":"mensile","mese":4,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":200.0,"iva":22,"tipo":"mensile","mese":4,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":14,"importo":800.0,"iva":22,"tipo":"mensile","mese":4,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":7,"importo":350.0,"iva":22,"tipo":"mensile","mese":5,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":100.0,"iva":22,"tipo":"mensile","mese":5,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":6,"importo":150.0,"iva":22,"tipo":"mensile","mese":5,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":200.0,"iva":22,"tipo":"mensile","mese":5,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":14,"importo":300.0,"iva":22,"tipo":"mensile","mese":5,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":7,"importo":350.0,"iva":22,"tipo":"mensile","mese":6,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":100.0,"iva":22,"tipo":"mensile","mese":6,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":6,"importo":150.0,"iva":22,"tipo":"mensile","mese":6,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":200.0,"iva":22,"tipo":"mensile","mese":6,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":14,"importo":300.0,"iva":22,"tipo":"mensile","mese":6,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":7,"importo":350.0,"iva":22,"tipo":"mensile","mese":7,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":100.0,"iva":22,"tipo":"mensile","mese":7,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":6,"importo":150.0,"iva":22,"tipo":"mensile","mese":7,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":200.0,"iva":22,"tipo":"mensile","mese":7,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":14,"importo":300.0,"iva":22,"tipo":"mensile","mese":7,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":7,"importo":350.0,"iva":22,"tipo":"mensile","mese":8,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":100.0,"iva":22,"tipo":"mensile","mese":8,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":6,"importo":150.0,"iva":22,"tipo":"mensile","mese":8,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":200.0,"iva":22,"tipo":"mensile","mese":8,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":14,"importo":300.0,"iva":22,"tipo":"mensile","mese":8,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":7,"importo":350.0,"iva":22,"tipo":"mensile","mese":9,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":100.0,"iva":22,"tipo":"mensile","mese":9,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":6,"importo":150.0,"iva":22,"tipo":"mensile","mese":9,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":200.0,"iva":22,"tipo":"mensile","mese":9,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":14,"importo":300.0,"iva":22,"tipo":"mensile","mese":9,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":7,"importo":350.0,"iva":22,"tipo":"mensile","mese":10,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":100.0,"iva":22,"tipo":"mensile","mese":10,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":6,"importo":150.0,"iva":22,"tipo":"mensile","mese":10,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":200.0,"iva":22,"tipo":"mensile","mese":10,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":14,"importo":300.0,"iva":22,"tipo":"mensile","mese":10,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":7,"importo":350.0,"iva":22,"tipo":"mensile","mese":11,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":100.0,"iva":22,"tipo":"mensile","mese":11,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":6,"importo":150.0,"iva":22,"tipo":"mensile","mese":11,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":200.0,"iva":22,"tipo":"mensile","mese":11,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":14,"importo":300.0,"iva":22,"tipo":"mensile","mese":11,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":7,"importo":350.0,"iva":22,"tipo":"mensile","mese":12,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":100.0,"iva":22,"tipo":"mensile","mese":12,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":6,"importo":150.0,"iva":22,"tipo":"mensile","mese":12,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":200.0,"iva":22,"tipo":"mensile","mese":12,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":14,"importo":300.0,"iva":22,"tipo":"mensile","mese":12,"anno":2026,"buId":5,"bdg_cons":"bdg"}],"mesiConsuntivati":[1]},{"id":5,"cliente":"ADG Ambasciatori del Gusto","servizio":"Promozione Media - Supporto Social - Futura 2026 -","tipo":"spot","importo":6300.0,"meseInizio":1,"annoInizio":2026,"durata":1,"scadenze":[{"desc":"Promozione Media - Supporto Social - Futura 2026 - CUP D28J2","importo":1000.0,"data":"2026-02-12","bdg_cons":"cons"},{"desc":"Promozione Media - Supporto Stampa - Futura 2026 - CUP D28J2","importo":1100.0,"data":"2026-02-12","bdg_cons":"cons"},{"desc":"Promozione Media - Supporto Social - Futura 2026 - CUP D28J2","importo":1000.0,"data":"2026-02-27","bdg_cons":"bdg"},{"desc":"Promozione Media - Supporto Stampa - Futura 2026 - CUP D28J2","importo":1100.0,"data":"2026-02-27","bdg_cons":"bdg"},{"desc":"Promozione Media - Supporto Social - Futura 2026 - CUP D28J2","importo":1000.0,"data":"2026-03-28","bdg_cons":"bdg"},{"desc":"Promozione Media - Supporto Stampa - Futura 2026 - CUP D28J2","importo":1100.0,"data":"2026-03-28","bdg_cons":"bdg"}],"buSplit":[{"buId":1,"importo":3000.0},{"buId":2,"importo":3300.0}],"costi":[{"profId":4,"importo":850.0,"iva":22,"tipo":"unatantum","mese":1,"anno":2026,"buId":1,"bdg_cons":"cons"},{"profId":3,"importo":500.0,"iva":22,"tipo":"unatantum","mese":1,"anno":2026,"buId":1,"bdg_cons":"cons"},{"profId":14,"importo":300.0,"iva":22,"tipo":"unatantum","mese":1,"anno":2026,"buId":5,"bdg_cons":"cons"},{"profId":4,"importo":850.0,"iva":22,"tipo":"unatantum","mese":2,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":3,"importo":500.0,"iva":22,"tipo":"unatantum","mese":2,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":14,"importo":300.0,"iva":22,"tipo":"unatantum","mese":2,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":4,"importo":850.0,"iva":22,"tipo":"unatantum","mese":3,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":3,"importo":500.0,"iva":22,"tipo":"unatantum","mese":3,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":14,"importo":300.0,"iva":22,"tipo":"unatantum","mese":3,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":4,"importo":850.0,"iva":22,"tipo":"unatantum","mese":4,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":3,"importo":500.0,"iva":22,"tipo":"unatantum","mese":4,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":14,"importo":300.0,"iva":22,"tipo":"unatantum","mese":4,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":4,"importo":850.0,"iva":22,"tipo":"unatantum","mese":5,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":3,"importo":500.0,"iva":22,"tipo":"unatantum","mese":5,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":14,"importo":300.0,"iva":22,"tipo":"unatantum","mese":5,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":4,"importo":850.0,"iva":22,"tipo":"unatantum","mese":6,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":3,"importo":500.0,"iva":22,"tipo":"unatantum","mese":6,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":14,"importo":300.0,"iva":22,"tipo":"unatantum","mese":6,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":4,"importo":850.0,"iva":22,"tipo":"unatantum","mese":7,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":3,"importo":500.0,"iva":22,"tipo":"unatantum","mese":7,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":14,"importo":300.0,"iva":22,"tipo":"unatantum","mese":7,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":4,"importo":850.0,"iva":22,"tipo":"unatantum","mese":8,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":3,"importo":500.0,"iva":22,"tipo":"unatantum","mese":8,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":14,"importo":300.0,"iva":22,"tipo":"unatantum","mese":8,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":4,"importo":850.0,"iva":22,"tipo":"unatantum","mese":9,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":3,"importo":500.0,"iva":22,"tipo":"unatantum","mese":9,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":14,"importo":300.0,"iva":22,"tipo":"unatantum","mese":9,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":4,"importo":850.0,"iva":22,"tipo":"unatantum","mese":10,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":3,"importo":500.0,"iva":22,"tipo":"unatantum","mese":10,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":14,"importo":300.0,"iva":22,"tipo":"unatantum","mese":10,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":4,"importo":850.0,"iva":22,"tipo":"unatantum","mese":11,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":3,"importo":500.0,"iva":22,"tipo":"unatantum","mese":11,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":14,"importo":300.0,"iva":22,"tipo":"unatantum","mese":11,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":4,"importo":850.0,"iva":22,"tipo":"unatantum","mese":12,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":3,"importo":500.0,"iva":22,"tipo":"unatantum","mese":12,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":14,"importo":300.0,"iva":22,"tipo":"unatantum","mese":12,"anno":2026,"buId":5,"bdg_cons":"bdg"}]},{"id":6,"cliente":"ADG Ambasciatori del Gusto","servizio":"Rimborsi spese a collaboratori - Supporto Eventi -","tipo":"spot","importo":7500.0,"meseInizio":1,"annoInizio":2026,"durata":1,"scadenze":[{"desc":"Rimborsi spese a collaboratori - Supporto Eventi - Futura 20","importo":2500.0,"data":"2026-02-12","bdg_cons":"cons"},{"desc":"Rimborsi spese a collaboratori - Supporto Eventi - Futura 20","importo":2500.0,"data":"2026-02-27","bdg_cons":"bdg"},{"desc":"Rimborsi spese a collaboratori - Supporto Eventi - Futura 20","importo":2500.0,"data":"2026-03-28","bdg_cons":"bdg"}],"buSplit":[{"buId":6,"importo":7500.0}],"costi":[{"profId":1,"importo":1050.0,"iva":22,"tipo":"unatantum","mese":1,"anno":2026,"buId":6,"bdg_cons":"cons"},{"profId":2,"importo":600.0,"iva":22,"tipo":"unatantum","mese":1,"anno":2026,"buId":6,"bdg_cons":"cons"},{"profId":1,"importo":1050.0,"iva":22,"tipo":"unatantum","mese":2,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":2,"importo":600.0,"iva":22,"tipo":"unatantum","mese":2,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":1,"importo":1050.0,"iva":22,"tipo":"unatantum","mese":3,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":2,"importo":600.0,"iva":22,"tipo":"unatantum","mese":3,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":1,"importo":1050.0,"iva":22,"tipo":"unatantum","mese":4,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":2,"importo":600.0,"iva":22,"tipo":"unatantum","mese":4,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":1,"importo":1050.0,"iva":22,"tipo":"unatantum","mese":5,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":2,"importo":600.0,"iva":22,"tipo":"unatantum","mese":5,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":1,"importo":1050.0,"iva":22,"tipo":"unatantum","mese":6,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":2,"importo":600.0,"iva":22,"tipo":"unatantum","mese":6,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":1,"importo":1050.0,"iva":22,"tipo":"unatantum","mese":7,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":2,"importo":800.0,"iva":22,"tipo":"unatantum","mese":7,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":1,"importo":1050.0,"iva":22,"tipo":"unatantum","mese":8,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":2,"importo":800.0,"iva":22,"tipo":"unatantum","mese":8,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":1,"importo":1050.0,"iva":22,"tipo":"unatantum","mese":9,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":2,"importo":800.0,"iva":22,"tipo":"unatantum","mese":9,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":1,"importo":1050.0,"iva":22,"tipo":"unatantum","mese":10,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":2,"importo":800.0,"iva":22,"tipo":"unatantum","mese":10,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":1,"importo":1050.0,"iva":22,"tipo":"unatantum","mese":11,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":2,"importo":800.0,"iva":22,"tipo":"unatantum","mese":11,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":1,"importo":1050.0,"iva":22,"tipo":"unatantum","mese":12,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":2,"importo":800.0,"iva":22,"tipo":"unatantum","mese":12,"anno":2026,"buId":6,"bdg_cons":"bdg"}]},{"id":7,"cliente":"ADG Ambasciatori del Gusto","servizio":"Futura rimborso spese trasferta","tipo":"spot","importo":1000.0,"meseInizio":3,"annoInizio":2026,"durata":1,"scadenze":[{"desc":"Futura rimborso spese trasferta","importo":1000.0,"data":"2026-03-28","bdg_cons":"bdg"}],"buSplit":[{"buId":6,"importo":1000.0}],"costi":[{"profId":14,"importo":1950.0,"iva":22,"tipo":"unatantum","mese":4,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":7,"importo":900.0,"iva":22,"tipo":"unatantum","mese":4,"anno":2026,"buId":3,"bdg_cons":"bdg"}]},{"id":8,"cliente":"ADG Ambasciatori del Gusto","servizio":"Uff. stampa BONUS ANNUALE","tipo":"spot","importo":22500.0,"meseInizio":4,"annoInizio":2026,"durata":1,"scadenze":[{"desc":"Social - APR","importo":1000.0,"data":"2026-04-28","bdg_cons":"bdg"},{"desc":"Uff. stampa - APR","importo":1100.0,"data":"2026-04-28","bdg_cons":"bdg"},{"desc":"Social - MAG","importo":1000.0,"data":"2026-05-28","bdg_cons":"bdg"},{"desc":"Uff. stampa - MAG","importo":1100.0,"data":"2026-05-28","bdg_cons":"bdg"},{"desc":"Social - GIU","importo":1000.0,"data":"2026-06-28","bdg_cons":"bdg"},{"desc":"Uff. stampa - GIU","importo":1100.0,"data":"2026-06-28","bdg_cons":"bdg"},{"desc":"Social - LUG","importo":1000.0,"data":"2026-07-28","bdg_cons":"bdg"},{"desc":"Uff. stampa - LUG","importo":1100.0,"data":"2026-07-28","bdg_cons":"bdg"},{"desc":"Social - AGO","importo":1000.0,"data":"2026-08-28","bdg_cons":"bdg"},{"desc":"Uff. stampa - AGO","importo":1100.0,"data":"2026-08-28","bdg_cons":"bdg"},{"desc":"Social - SET","importo":1000.0,"data":"2026-09-28","bdg_cons":"bdg"},{"desc":"Uff. stampa - SET","importo":1100.0,"data":"2026-09-28","bdg_cons":"bdg"},{"desc":"Social - OTT","importo":1000.0,"data":"2026-10-28","bdg_cons":"bdg"},{"desc":"Uff. stampa - OTT","importo":1100.0,"data":"2026-10-28","bdg_cons":"bdg"},{"desc":"Social - NOV","importo":1000.0,"data":"2026-11-28","bdg_cons":"bdg"},{"desc":"Uff. stampa - NOV","importo":1100.0,"data":"2026-11-28","bdg_cons":"bdg"},{"desc":"Social - DIC","importo":1000.0,"data":"2026-12-28","bdg_cons":"bdg"},{"desc":"Uff. stampa - DIC","importo":1100.0,"data":"2026-12-28","bdg_cons":"bdg"},{"desc":"Uff. stampa BONUS ANNUALE","importo":3600.0,"data":"2026-12-28","bdg_cons":"bdg"}],"buSplit":[{"buId":5,"importo":3000.0},{"buId":2,"importo":13500.0},{"buId":1,"importo":6000.0}],"costi":[{"profId":4,"importo":850.0,"iva":22,"tipo":"unatantum","mese":1,"anno":2026,"buId":1,"bdg_cons":"cons"},{"profId":3,"importo":500.0,"iva":22,"tipo":"unatantum","mese":1,"anno":2026,"buId":1,"bdg_cons":"cons"},{"profId":14,"importo":300.0,"iva":22,"tipo":"unatantum","mese":1,"anno":2026,"buId":5,"bdg_cons":"cons"},{"profId":4,"importo":850.0,"iva":22,"tipo":"unatantum","mese":2,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":3,"importo":500.0,"iva":22,"tipo":"unatantum","mese":2,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":14,"importo":300.0,"iva":22,"tipo":"unatantum","mese":2,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":4,"importo":850.0,"iva":22,"tipo":"unatantum","mese":3,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":3,"importo":500.0,"iva":22,"tipo":"unatantum","mese":3,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":14,"importo":300.0,"iva":22,"tipo":"unatantum","mese":3,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":4,"importo":850.0,"iva":22,"tipo":"unatantum","mese":4,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":3,"importo":500.0,"iva":22,"tipo":"unatantum","mese":4,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":14,"importo":300.0,"iva":22,"tipo":"unatantum","mese":4,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":4,"importo":850.0,"iva":22,"tipo":"unatantum","mese":5,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":3,"importo":500.0,"iva":22,"tipo":"unatantum","mese":5,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":14,"importo":300.0,"iva":22,"tipo":"unatantum","mese":5,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":4,"importo":850.0,"iva":22,"tipo":"unatantum","mese":6,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":3,"importo":500.0,"iva":22,"tipo":"unatantum","mese":6,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":14,"importo":300.0,"iva":22,"tipo":"unatantum","mese":6,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":4,"importo":850.0,"iva":22,"tipo":"unatantum","mese":7,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":3,"importo":500.0,"iva":22,"tipo":"unatantum","mese":7,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":14,"importo":300.0,"iva":22,"tipo":"unatantum","mese":7,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":4,"importo":850.0,"iva":22,"tipo":"unatantum","mese":8,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":3,"importo":500.0,"iva":22,"tipo":"unatantum","mese":8,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":14,"importo":300.0,"iva":22,"tipo":"unatantum","mese":8,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":4,"importo":850.0,"iva":22,"tipo":"unatantum","mese":9,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":3,"importo":500.0,"iva":22,"tipo":"unatantum","mese":9,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":14,"importo":300.0,"iva":22,"tipo":"unatantum","mese":9,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":4,"importo":850.0,"iva":22,"tipo":"unatantum","mese":10,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":3,"importo":500.0,"iva":22,"tipo":"unatantum","mese":10,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":14,"importo":300.0,"iva":22,"tipo":"unatantum","mese":10,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":4,"importo":850.0,"iva":22,"tipo":"unatantum","mese":11,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":3,"importo":500.0,"iva":22,"tipo":"unatantum","mese":11,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":14,"importo":300.0,"iva":22,"tipo":"unatantum","mese":11,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":4,"importo":850.0,"iva":22,"tipo":"unatantum","mese":12,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":3,"importo":500.0,"iva":22,"tipo":"unatantum","mese":12,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":14,"importo":300.0,"iva":22,"tipo":"unatantum","mese":12,"anno":2026,"buId":5,"bdg_cons":"bdg"}]},{"id":9,"cliente":"ADG Ambasciatori del Gusto","servizio":"Eventi e progetti","tipo":"spot","importo":22500.0,"meseInizio":4,"annoInizio":2026,"durata":1,"scadenze":[{"desc":"Eventi e progetti - APR","importo":2500.0,"data":"2026-04-28","bdg_cons":"bdg"},{"desc":"Eventi e progetti - MAG","importo":2500.0,"data":"2026-05-28","bdg_cons":"bdg"},{"desc":"Eventi e progetti - GIU","importo":2500.0,"data":"2026-06-28","bdg_cons":"bdg"},{"desc":"Eventi e progetti - LUG","importo":2500.0,"data":"2026-07-28","bdg_cons":"bdg"},{"desc":"Eventi e progetti - AGO","importo":2500.0,"data":"2026-08-28","bdg_cons":"bdg"},{"desc":"Eventi e progetti - SET","importo":2500.0,"data":"2026-09-28","bdg_cons":"bdg"},{"desc":"Eventi e progetti - OTT","importo":2500.0,"data":"2026-10-28","bdg_cons":"bdg"},{"desc":"Eventi e progetti - NOV","importo":2500.0,"data":"2026-11-28","bdg_cons":"bdg"},{"desc":"Eventi e progetti - DIC","importo":2500.0,"data":"2026-12-28","bdg_cons":"bdg"}],"buSplit":[{"buId":6,"importo":22500.0}],"costi":[{"profId":1,"importo":1050.0,"iva":22,"tipo":"unatantum","mese":1,"anno":2026,"buId":6,"bdg_cons":"cons"},{"profId":2,"importo":600.0,"iva":22,"tipo":"unatantum","mese":1,"anno":2026,"buId":6,"bdg_cons":"cons"},{"profId":1,"importo":1050.0,"iva":22,"tipo":"unatantum","mese":2,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":2,"importo":600.0,"iva":22,"tipo":"unatantum","mese":2,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":1,"importo":1050.0,"iva":22,"tipo":"unatantum","mese":3,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":2,"importo":600.0,"iva":22,"tipo":"unatantum","mese":3,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":1,"importo":1050.0,"iva":22,"tipo":"unatantum","mese":4,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":2,"importo":600.0,"iva":22,"tipo":"unatantum","mese":4,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":1,"importo":1050.0,"iva":22,"tipo":"unatantum","mese":5,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":2,"importo":600.0,"iva":22,"tipo":"unatantum","mese":5,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":1,"importo":1050.0,"iva":22,"tipo":"unatantum","mese":6,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":2,"importo":600.0,"iva":22,"tipo":"unatantum","mese":6,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":1,"importo":1050.0,"iva":22,"tipo":"unatantum","mese":7,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":2,"importo":800.0,"iva":22,"tipo":"unatantum","mese":7,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":1,"importo":1050.0,"iva":22,"tipo":"unatantum","mese":8,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":2,"importo":800.0,"iva":22,"tipo":"unatantum","mese":8,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":1,"importo":1050.0,"iva":22,"tipo":"unatantum","mese":9,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":2,"importo":800.0,"iva":22,"tipo":"unatantum","mese":9,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":1,"importo":1050.0,"iva":22,"tipo":"unatantum","mese":10,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":2,"importo":800.0,"iva":22,"tipo":"unatantum","mese":10,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":1,"importo":1050.0,"iva":22,"tipo":"unatantum","mese":11,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":2,"importo":800.0,"iva":22,"tipo":"unatantum","mese":11,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":1,"importo":1050.0,"iva":22,"tipo":"unatantum","mese":12,"anno":2026,"buId":6,"bdg_cons":"bdg"},{"profId":2,"importo":800.0,"iva":22,"tipo":"unatantum","mese":12,"anno":2026,"buId":6,"bdg_cons":"bdg"}]},{"id":10,"cliente":"SAPORE PERFETTO","servizio":"Kit company profile","tipo":"ricorrente","importo":1900,"meseInizio":2,"annoInizio":2026,"durata":1,"scadenze":[],"buSplit":[{"buId":5,"importo":763.0},{"buId":3,"importo":1737.0}],"costi":[{"profId":14,"importo":150.0,"iva":22,"tipo":"mensile","mese":2,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":7,"importo":800.0,"iva":22,"tipo":"mensile","mese":3,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":15,"importo":200.0,"iva":22,"tipo":"mensile","mese":2,"anno":2026,"buId":5,"bdg_cons":"bdg"}],"mesiConsuntivati":[]},{"id":11,"cliente":"SAPORE PERFETTO","servizio":"Comunicazione","tipo":"ricorrente","importo":1900,"meseInizio":1,"annoInizio":2026,"durata":12,"scadenze":[],"buSplit":[{"buId":1,"importo":475.28},{"buId":2,"importo":450.0},{"buId":5,"importo":300.0},{"buId":3,"importo":600.0}],"costi":[{"profId":12,"importo":500.0,"iva":22,"tipo":"mensile","mese":1,"anno":2026,"buId":4,"bdg_cons":"cons"},{"profId":11,"importo":500.0,"iva":22,"tipo":"mensile","mese":1,"anno":2026,"buId":3,"bdg_cons":"cons"},{"profId":3,"importo":100.0,"iva":22,"tipo":"mensile","mese":1,"anno":2026,"buId":1,"bdg_cons":"cons"},{"profId":5,"importo":200.0,"iva":22,"tipo":"mensile","mese":1,"anno":2026,"buId":2,"bdg_cons":"cons"},{"profId":4,"importo":300.0,"iva":22,"tipo":"mensile","mese":1,"anno":2026,"buId":1,"bdg_cons":"cons"},{"profId":7,"importo":100.0,"iva":22,"tipo":"mensile","mese":1,"anno":2026,"buId":3,"bdg_cons":"cons"},{"profId":10,"importo":300.0,"iva":22,"tipo":"mensile","mese":1,"anno":2026,"buId":3,"bdg_cons":"cons"},{"profId":14,"importo":50.0,"iva":22,"tipo":"mensile","mese":1,"anno":2026,"buId":5,"bdg_cons":"cons"},{"profId":3,"importo":100.0,"iva":22,"tipo":"mensile","mese":2,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":5,"importo":200.0,"iva":22,"tipo":"mensile","mese":2,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":4,"importo":300.0,"iva":22,"tipo":"mensile","mese":2,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":7,"importo":100.0,"iva":22,"tipo":"mensile","mese":2,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":10,"importo":300.0,"iva":22,"tipo":"mensile","mese":2,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":14,"importo":50.0,"iva":22,"tipo":"mensile","mese":2,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":3,"importo":100.0,"iva":22,"tipo":"mensile","mese":3,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":200.0,"iva":22,"tipo":"mensile","mese":3,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":4,"importo":300.0,"iva":22,"tipo":"mensile","mese":3,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":7,"importo":100.0,"iva":22,"tipo":"mensile","mese":3,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":10,"importo":300.0,"iva":22,"tipo":"mensile","mese":3,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":14,"importo":50.0,"iva":22,"tipo":"mensile","mese":3,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":3,"importo":100.0,"iva":22,"tipo":"mensile","mese":4,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":5,"importo":200.0,"iva":22,"tipo":"mensile","mese":4,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":4,"importo":300.0,"iva":22,"tipo":"mensile","mese":4,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":7,"importo":100.0,"iva":22,"tipo":"mensile","mese":4,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":10,"importo":300.0,"iva":22,"tipo":"mensile","mese":4,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":14,"importo":50.0,"iva":22,"tipo":"mensile","mese":4,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":3,"importo":100.0,"iva":22,"tipo":"mensile","mese":5,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":200.0,"iva":22,"tipo":"mensile","mese":5,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":4,"importo":300.0,"iva":22,"tipo":"mensile","mese":5,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":7,"importo":100.0,"iva":22,"tipo":"mensile","mese":5,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":10,"importo":300.0,"iva":22,"tipo":"mensile","mese":5,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":14,"importo":50.0,"iva":22,"tipo":"mensile","mese":5,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":3,"importo":100.0,"iva":22,"tipo":"mensile","mese":6,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":5,"importo":200.0,"iva":22,"tipo":"mensile","mese":6,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":4,"importo":300.0,"iva":22,"tipo":"mensile","mese":6,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":7,"importo":100.0,"iva":22,"tipo":"mensile","mese":6,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":10,"importo":300.0,"iva":22,"tipo":"mensile","mese":6,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":14,"importo":50.0,"iva":22,"tipo":"mensile","mese":6,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":3,"importo":100.0,"iva":22,"tipo":"mensile","mese":7,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":200.0,"iva":22,"tipo":"mensile","mese":7,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":4,"importo":300.0,"iva":22,"tipo":"mensile","mese":7,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":7,"importo":100.0,"iva":22,"tipo":"mensile","mese":7,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":10,"importo":300.0,"iva":22,"tipo":"mensile","mese":7,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":14,"importo":50.0,"iva":22,"tipo":"mensile","mese":7,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":3,"importo":100.0,"iva":22,"tipo":"mensile","mese":8,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":5,"importo":200.0,"iva":22,"tipo":"mensile","mese":8,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":4,"importo":300.0,"iva":22,"tipo":"mensile","mese":8,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":7,"importo":100.0,"iva":22,"tipo":"mensile","mese":8,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":10,"importo":300.0,"iva":22,"tipo":"mensile","mese":8,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":14,"importo":50.0,"iva":22,"tipo":"mensile","mese":8,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":3,"importo":100.0,"iva":22,"tipo":"mensile","mese":9,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":200.0,"iva":22,"tipo":"mensile","mese":9,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":4,"importo":300.0,"iva":22,"tipo":"mensile","mese":9,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":7,"importo":100.0,"iva":22,"tipo":"mensile","mese":9,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":10,"importo":300.0,"iva":22,"tipo":"mensile","mese":9,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":14,"importo":50.0,"iva":22,"tipo":"mensile","mese":9,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":3,"importo":100.0,"iva":22,"tipo":"mensile","mese":10,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":5,"importo":200.0,"iva":22,"tipo":"mensile","mese":10,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":4,"importo":300.0,"iva":22,"tipo":"mensile","mese":10,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":7,"importo":100.0,"iva":22,"tipo":"mensile","mese":10,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":10,"importo":300.0,"iva":22,"tipo":"mensile","mese":10,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":14,"importo":50.0,"iva":22,"tipo":"mensile","mese":10,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":3,"importo":100.0,"iva":22,"tipo":"mensile","mese":11,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":200.0,"iva":22,"tipo":"mensile","mese":11,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":4,"importo":300.0,"iva":22,"tipo":"mensile","mese":11,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":7,"importo":100.0,"iva":22,"tipo":"mensile","mese":11,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":10,"importo":300.0,"iva":22,"tipo":"mensile","mese":11,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":14,"importo":50.0,"iva":22,"tipo":"mensile","mese":11,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":3,"importo":100.0,"iva":22,"tipo":"mensile","mese":12,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":5,"importo":200.0,"iva":22,"tipo":"mensile","mese":12,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":4,"importo":300.0,"iva":22,"tipo":"mensile","mese":12,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":7,"importo":100.0,"iva":22,"tipo":"mensile","mese":12,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":10,"importo":300.0,"iva":22,"tipo":"mensile","mese":12,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":14,"importo":50.0,"iva":22,"tipo":"mensile","mese":12,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":15,"importo":150.0,"iva":22,"tipo":"mensile","mese":1,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":15,"importo":150.0,"iva":22,"tipo":"mensile","mese":2,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":15,"importo":150.0,"iva":22,"tipo":"mensile","mese":3,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":15,"importo":150.0,"iva":22,"tipo":"mensile","mese":4,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":15,"importo":150.0,"iva":22,"tipo":"mensile","mese":5,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":15,"importo":150.0,"iva":22,"tipo":"mensile","mese":6,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":15,"importo":150.0,"iva":22,"tipo":"mensile","mese":7,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":15,"importo":150.0,"iva":22,"tipo":"mensile","mese":8,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":15,"importo":150.0,"iva":22,"tipo":"mensile","mese":9,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":15,"importo":150.0,"iva":22,"tipo":"mensile","mese":10,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":15,"importo":150.0,"iva":22,"tipo":"mensile","mese":11,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":15,"importo":150.0,"iva":22,"tipo":"mensile","mese":12,"anno":2026,"buId":5,"bdg_cons":"bdg"}],"mesiConsuntivati":[1]},{"id":12,"cliente":"Pinocchio Ristorante di Bertinotti P e C snc","servizio":"Comunicazione","tipo":"ricorrente","importo":1800,"meseInizio":1,"annoInizio":2026,"durata":12,"scadenze":[],"buSplit":[{"buId":1,"importo":450.0},{"buId":2,"importo":450.0},{"buId":5,"importo":300.0},{"buId":4,"importo":33.33},{"buId":3,"importo":633.33}],"costi":[{"profId":7,"importo":100.0,"iva":22,"tipo":"mensile","mese":1,"anno":2026,"buId":3,"bdg_cons":"cons"},{"profId":10,"importo":600.0,"iva":22,"tipo":"mensile","mese":1,"anno":2026,"buId":3,"bdg_cons":"cons"},{"profId":3,"importo":300.0,"iva":22,"tipo":"mensile","mese":1,"anno":2026,"buId":1,"bdg_cons":"cons"},{"profId":5,"importo":300.0,"iva":22,"tipo":"mensile","mese":1,"anno":2026,"buId":2,"bdg_cons":"cons"},{"profId":14,"importo":550.0,"iva":22,"tipo":"mensile","mese":1,"anno":2026,"buId":5,"bdg_cons":"cons"},{"profId":7,"importo":100.0,"iva":22,"tipo":"mensile","mese":2,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":10,"importo":300.0,"iva":22,"tipo":"mensile","mese":2,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":300.0,"iva":22,"tipo":"mensile","mese":2,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":300.0,"iva":22,"tipo":"mensile","mese":2,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":14,"importo":200.0,"iva":22,"tipo":"mensile","mese":2,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":7,"importo":100.0,"iva":22,"tipo":"mensile","mese":3,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":10,"importo":300.0,"iva":22,"tipo":"mensile","mese":3,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":300.0,"iva":22,"tipo":"mensile","mese":3,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":300.0,"iva":22,"tipo":"mensile","mese":3,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":14,"importo":200.0,"iva":22,"tipo":"mensile","mese":3,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":7,"importo":100.0,"iva":22,"tipo":"mensile","mese":4,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":10,"importo":600.0,"iva":22,"tipo":"mensile","mese":4,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":300.0,"iva":22,"tipo":"mensile","mese":4,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":300.0,"iva":22,"tipo":"mensile","mese":4,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":14,"importo":700.0,"iva":22,"tipo":"mensile","mese":4,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":7,"importo":100.0,"iva":22,"tipo":"mensile","mese":5,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":10,"importo":300.0,"iva":22,"tipo":"mensile","mese":5,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":300.0,"iva":22,"tipo":"mensile","mese":5,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":300.0,"iva":22,"tipo":"mensile","mese":5,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":14,"importo":200.0,"iva":22,"tipo":"mensile","mese":5,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":7,"importo":100.0,"iva":22,"tipo":"mensile","mese":6,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":10,"importo":300.0,"iva":22,"tipo":"mensile","mese":6,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":300.0,"iva":22,"tipo":"mensile","mese":6,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":300.0,"iva":22,"tipo":"mensile","mese":6,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":14,"importo":200.0,"iva":22,"tipo":"mensile","mese":6,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":7,"importo":100.0,"iva":22,"tipo":"mensile","mese":7,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":10,"importo":300.0,"iva":22,"tipo":"mensile","mese":7,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":300.0,"iva":22,"tipo":"mensile","mese":7,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":300.0,"iva":22,"tipo":"mensile","mese":7,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":14,"importo":200.0,"iva":22,"tipo":"mensile","mese":7,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":7,"importo":100.0,"iva":22,"tipo":"mensile","mese":8,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":10,"importo":300.0,"iva":22,"tipo":"mensile","mese":8,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":300.0,"iva":22,"tipo":"mensile","mese":8,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":300.0,"iva":22,"tipo":"mensile","mese":8,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":14,"importo":200.0,"iva":22,"tipo":"mensile","mese":8,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":7,"importo":100.0,"iva":22,"tipo":"mensile","mese":9,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":10,"importo":300.0,"iva":22,"tipo":"mensile","mese":9,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":300.0,"iva":22,"tipo":"mensile","mese":9,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":300.0,"iva":22,"tipo":"mensile","mese":9,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":14,"importo":200.0,"iva":22,"tipo":"mensile","mese":9,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":7,"importo":100.0,"iva":22,"tipo":"mensile","mese":10,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":10,"importo":300.0,"iva":22,"tipo":"mensile","mese":10,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":300.0,"iva":22,"tipo":"mensile","mese":10,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":300.0,"iva":22,"tipo":"mensile","mese":10,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":14,"importo":200.0,"iva":22,"tipo":"mensile","mese":10,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":7,"importo":100.0,"iva":22,"tipo":"mensile","mese":11,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":10,"importo":300.0,"iva":22,"tipo":"mensile","mese":11,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":300.0,"iva":22,"tipo":"mensile","mese":11,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":300.0,"iva":22,"tipo":"mensile","mese":11,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":14,"importo":200.0,"iva":22,"tipo":"mensile","mese":11,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":7,"importo":100.0,"iva":22,"tipo":"mensile","mese":12,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":10,"importo":300.0,"iva":22,"tipo":"mensile","mese":12,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":300.0,"iva":22,"tipo":"mensile","mese":12,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":300.0,"iva":22,"tipo":"mensile","mese":12,"anno":2026,"buId":2,"bdg_cons":"bdg"}],"mesiConsuntivati":[1]},{"id":13,"cliente":"CLAMA GLORIA","servizio":"Comunicazione","tipo":"ricorrente","importo":1500,"meseInizio":1,"annoInizio":2026,"durata":12,"scadenze":[],"buSplit":[{"buId":1,"importo":516.67},{"buId":2,"importo":500.0},{"buId":3,"importo":500.0}],"costi":[{"profId":3,"importo":300.0,"iva":22,"tipo":"mensile","mese":1,"anno":2026,"buId":1,"bdg_cons":"cons"},{"profId":5,"importo":200.0,"iva":22,"tipo":"mensile","mese":1,"anno":2026,"buId":2,"bdg_cons":"cons"},{"profId":7,"importo":350.0,"iva":22,"tipo":"mensile","mese":1,"anno":2026,"buId":3,"bdg_cons":"cons"},{"profId":7,"importo":350.0,"iva":22,"tipo":"mensile","mese":2,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":300.0,"iva":22,"tipo":"mensile","mese":2,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":200.0,"iva":22,"tipo":"mensile","mese":2,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":7,"importo":350.0,"iva":22,"tipo":"mensile","mese":3,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":300.0,"iva":22,"tipo":"mensile","mese":3,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":200.0,"iva":22,"tipo":"mensile","mese":3,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":7,"importo":650.0,"iva":22,"tipo":"mensile","mese":4,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":300.0,"iva":22,"tipo":"mensile","mese":4,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":200.0,"iva":22,"tipo":"mensile","mese":4,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":14,"importo":500.0,"iva":22,"tipo":"mensile","mese":4,"anno":2026,"buId":4,"bdg_cons":"bdg"},{"profId":7,"importo":350.0,"iva":22,"tipo":"mensile","mese":5,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":300.0,"iva":22,"tipo":"mensile","mese":5,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":200.0,"iva":22,"tipo":"mensile","mese":5,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":7,"importo":350.0,"iva":22,"tipo":"mensile","mese":6,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":300.0,"iva":22,"tipo":"mensile","mese":6,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":200.0,"iva":22,"tipo":"mensile","mese":6,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":7,"importo":350.0,"iva":22,"tipo":"mensile","mese":7,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":300.0,"iva":22,"tipo":"mensile","mese":7,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":200.0,"iva":22,"tipo":"mensile","mese":7,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":7,"importo":350.0,"iva":22,"tipo":"mensile","mese":8,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":300.0,"iva":22,"tipo":"mensile","mese":8,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":200.0,"iva":22,"tipo":"mensile","mese":8,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":7,"importo":350.0,"iva":22,"tipo":"mensile","mese":9,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":300.0,"iva":22,"tipo":"mensile","mese":9,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":200.0,"iva":22,"tipo":"mensile","mese":9,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":7,"importo":350.0,"iva":22,"tipo":"mensile","mese":10,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":300.0,"iva":22,"tipo":"mensile","mese":10,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":200.0,"iva":22,"tipo":"mensile","mese":10,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":7,"importo":350.0,"iva":22,"tipo":"mensile","mese":11,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":300.0,"iva":22,"tipo":"mensile","mese":11,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":200.0,"iva":22,"tipo":"mensile","mese":11,"anno":2026,"buId":2,"bdg_cons":"bdg"},{"profId":7,"importo":350.0,"iva":22,"tipo":"mensile","mese":12,"anno":2026,"buId":3,"bdg_cons":"bdg"},{"profId":3,"importo":300.0,"iva":22,"tipo":"mensile","mese":12,"anno":2026,"buId":1,"bdg_cons":"bdg"},{"profId":5,"importo":200.0,"iva":22,"tipo":"mensile","mese":12,"anno":2026,"buId":2,"bdg_cons":"bdg"}],"mesiConsuntivati":[1,2]},{"id":14,"cliente":"ADG Ambasciatori del Gusto","servizio":"Progetto scuole 2026 - 2° tappa","tipo":"spot","importo":6000.0,"meseInizio":10,"annoInizio":2026,"durata":1,"scadenze":[{"desc":"Progetto scuole 2026 - 1° tappa","importo":1000.0,"data":"2026-10-28","bdg_cons":"bdg"},{"desc":"Progetto scuole 2026 - 2° tappa","importo":1000.0,"data":"2026-10-28","bdg_cons":"bdg"},{"desc":"Progetto scuole 2026 - 3° tappa","importo":1000.0,"data":"2026-10-28","bdg_cons":"bdg"},{"desc":"Progetto scuole 2026 - 4° tappa","importo":1000.0,"data":"2026-10-28","bdg_cons":"bdg"},{"desc":"Progetto scuole 2026 - 5° tappa","importo":1000.0,"data":"2026-10-28","bdg_cons":"bdg"},{"desc":"Progetto scuole 2026 - 6° tappa","importo":1000.0,"data":"2026-10-28","bdg_cons":"bdg"}],"buSplit":[{"buId":3,"importo":6000.0}],"costi":[{"profId":7,"importo":1800.0,"iva":22,"tipo":"unatantum","mese":10,"anno":2026,"buId":3,"bdg_cons":"bdg"}]},{"id":15,"cliente":"ADG Ambasciatori del Gusto","servizio":"Compensi per attività di comunicazione - Futura 20","tipo":"spot","importo":3900.0,"meseInizio":4,"annoInizio":2026,"durata":1,"scadenze":[{"desc":"Compensi per attività di comunicazione - Futura 2026 - CUP D","importo":1950.0,"data":"2026-04-28","bdg_cons":"bdg"},{"desc":"Compensi per attività di comunicazione - Futura 2026 - CUP D","importo":1950.0,"data":"2026-04-28","bdg_cons":"bdg"}],"buSplit":[{"buId":5,"importo":1950.0},{"buId":3,"importo":1950.0}],"costi":[{"profId":14,"importo":1950.0,"iva":22,"tipo":"unatantum","mese":4,"anno":2026,"buId":5,"bdg_cons":"bdg"},{"profId":7,"importo":900.0,"iva":22,"tipo":"unatantum","mese":4,"anno":2026,"buId":3,"bdg_cons":"bdg"}]},{"id":16,"cliente":"CATTOLICA  - Dish er","servizio":"L.E.L. Laboratorio di Economia Locale - Impaginazi","tipo":"spot","importo":800.0,"meseInizio":4,"annoInizio":2026,"durata":1,"scadenze":[{"desc":"L.E.L. Laboratorio di Economia Locale - Impaginazione grafic","importo":800.0,"data":"2026-04-28","bdg_cons":"bdg"}],"buSplit":[{"buId":5,"importo":800.0}],"costi":[{"profId":14,"importo":450.0,"iva":22,"tipo":"unatantum","mese":4,"anno":2026,"buId":5,"bdg_cons":"bdg"}]},{"id":17,"cliente":"FROSCH consulting srls","servizio":"Menu Progettazione + Assistenza alla produzione","tipo":"ricorrente","importo":1500,"meseInizio":3,"annoInizio":2026,"durata":1,"scadenze":[],"buSplit":[{"buId":5,"importo":1200.0}],"costi":[{"profId":14,"importo":800.0,"iva":22,"tipo":"mensile","mese":4,"anno":2026,"buId":5,"bdg_cons":"bdg"}],"mesiConsuntivati":[]}],"professionisti":[{"id":1,"nome":"GOBBATO Laura","ruolo":"Commerciale & Bandi","email":"laura.gobbato@pillole-culinarie.it","piva":"IT05528440265","note":"","compensiFissi":[]},{"id":2,"nome":"SALVINI Maia","ruolo":"Project Manager","email":"maia.salvini@pillole-culinarie.it","piva":"IT14523050962","note":"","compensiFissi":[]},{"id":3,"nome":"GERMANO Amelie","ruolo":"Social Media Manager","email":"amelie.germano@pillole-culinarie.it","piva":"IT02667670034","note":"","compensiFissi":[]},{"id":4,"nome":"MORSTABILINI Silvia","ruolo":"Social Media Manager","email":"silvia.morstabilini@pillole-culinarie.it","piva":"IT01809310194","note":"","compensiFissi":[]},{"id":5,"nome":"MIGNONE Camilla","ruolo":"Comunicazione","email":"mignonecamilla@gmail.com","piva":"IT02798390064","note":"","compensiFissi":[]},{"id":6,"nome":"BARBIERI Giada","ruolo":"Ufficio Stampa","email":"giada.barbieri@pillole-culinarie.it","piva":"IT02835020039","note":"","compensiFissi":[]},{"id":7,"nome":"POLLATO Andrea","ruolo":"Videomaker","email":"andrea.pollato@pillole-culinarie.it","piva":"IT12776680964","note":"","compensiFissi":[]},{"id":8,"nome":"DEFENDI Simone","ruolo":"Collaboratore","email":"simonedefendi12@gmail.com","piva":"C.F. DFNSMN00C29F704","note":"","compensiFissi":[]},{"id":9,"nome":"COLOMBO Alice","ruolo":"Fotografa/PM","email":"alice.colombo36@gmail.com","piva":"IT02750450039","note":"","compensiFissi":[]},{"id":10,"nome":"TARRICONE Luca","ruolo":"Consulente Legale","email":"studio@pillole-culinarie.it","piva":"IT01834610626","note":"","compensiFissi":[]},{"id":11,"nome":"CIAVARELLA Giuseppe","ruolo":"Videomaker","email":"gepvarellaproduction@gmail.com","piva":"IT08345770724","note":"","compensiFissi":[]},{"id":12,"nome":"COLANGIULI Fabio","ruolo":"Collaboratore","email":"fabio.colangiuli@agenziarappresentanze.com","piva":"IT08742560728","note":"","compensiFissi":[]},{"id":13,"nome":"TORRES DELGADO Danny","ruolo":"Videomaker","email":"Imageproduction7.7@gmail.com","piva":"02938960180","note":"","compensiFissi":[]},{"id":14,"nome":"COLOMBO Filippo","ruolo":"Fotografa/PM","email":"filippo.colombo@pillole-culinarie.it","piva":"IT13361860961","note":"","compensiFissi":[]},{"id":15,"nome":"BEZZOLA Camelia","ruolo":"Ufficio Stampa","email":"","piva":"IT11607120968","note":"","compensiFissi":[]},{"id":16,"nome":"BELLASIO Andrea","ruolo":"Web Developer","email":"andrea.bellasio@pillole-culinarie.it","piva":"IT13917600960","note":"","compensiFissi":[]},{"id":17,"nome":"DI PIERRO Roberto","ruolo":"Amministratore / PM","email":"roberto.dipierro@pillole-culinarie.it","piva":"IT12283060965","note":"","compensiFissi":[]},{"id":18,"nome":"BELFIORE Andrea","ruolo":"Collaboratore","email":"andrea.belfiore@pillole-culinarie.it","piva":"BLFNDR94L18F205D","note":"","compensiFissi":[]},{"id":19,"nome":"ZANELLA Nicolas","ruolo":"Videomaker","email":"","piva":"IT05567900260","note":"","compensiFissi":[]},{"id":20,"nome":"SINOPOLI Caterina","ruolo":"Collaboratore","email":"sinopolicaterina@hotmail.com","piva":"02718210798","note":"","compensiFissi":[]}],"costiFissi":[{"id":1,"descrizione":"Flyer per Futura","categoria":"Altro","importo":465.27,"iva":22,"fornitore":"GROUP 4 srl","ricorrenza":"unatantum","ogni":1,"meseInizio":3,"annoInizio":2026,"durata":1,"giorno":null,"mesiConsuntivati":[3]},{"id":2,"descrizione":"Creative Cloud Tutte le applicazioni 100 GB (quota","categoria":"Altro","importo":350.0,"iva":22,"fornitore":"ADOBE","ricorrenza":"unatantum","ogni":1,"meseInizio":11,"annoInizio":2026,"durata":1,"giorno":null,"mesiConsuntivati":[]},{"id":3,"descrizione":"PEC pilloleculinarie@pec.it","categoria":"Altro","importo":25.0,"iva":22,"fornitore":"ARUBA","ricorrenza":"unatantum","ogni":1,"meseInizio":10,"annoInizio":2026,"durata":1,"giorno":null,"mesiConsuntivati":[]},{"id":4,"descrizione":"Consulenza fiscale e amministrativa 2026 - I trim.","categoria":"Altro","importo":571.6,"iva":22,"fornitore":"CERBASI LUCY","ricorrenza":"custom","ogni":1,"meseInizio":3,"annoInizio":2026,"durata":5,"giorno":null,"mesiConsuntivati":[]},{"id":5,"descrizione":"Plug-in sito \"Pillole-culinarie.it\"","categoria":"Altro","importo":150.0,"iva":22,"fornitore":"FORMIDABLE FORMS","ricorrenza":"unatantum","ogni":1,"meseInizio":4,"annoInizio":2026,"durata":1,"giorno":null,"mesiConsuntivati":[]},{"id":6,"descrizione":"Commissioni per bonifici - GEN","categoria":"Altro","importo":16.62,"iva":22,"fornitore":"INTESA SAN PAOLO","ricorrenza":"mensile","ogni":1,"meseInizio":1,"annoInizio":2026,"durata":null,"giorno":null,"mesiConsuntivati":[1,2,3,1,2]},{"id":7,"descrizione":"Dominio sito Pillonet.it","categoria":"Altro","importo":17.83,"iva":22,"fornitore":"IONOS","ricorrenza":"custom","ogni":3,"meseInizio":2,"annoInizio":2026,"durata":6,"giorno":null,"mesiConsuntivati":[2]},{"id":8,"descrizione":"Microsoft Office 365 Business Basic (6,42€ x 13 li","categoria":"Altro","importo":81.7,"iva":22,"fornitore":"MICROSOFT","ricorrenza":"mensile","ogni":1,"meseInizio":1,"annoInizio":2026,"durata":null,"giorno":null,"mesiConsuntivati":[1,2,3]},{"id":9,"descrizione":"Hosting sito Pillole-Culinarie.it","categoria":"Altro","importo":350.0,"iva":22,"fornitore":"NETSONS","ricorrenza":"unatantum","ogni":1,"meseInizio":5,"annoInizio":2026,"durata":1,"giorno":null,"mesiConsuntivati":[]},{"id":10,"descrizione":"Utenza","categoria":"Altro","importo":228.0,"iva":22,"fornitore":"WeTransfer B.V.","ricorrenza":"unatantum","ogni":1,"meseInizio":2,"annoInizio":2026,"durata":1,"giorno":null,"mesiConsuntivati":[2]},{"id":11,"descrizione":"CUSCINETTO Spese di rappresentanza Festa Pillole","categoria":"Altro","importo":226.16,"iva":22,"fornitore":"?","ricorrenza":"custom","ogni":3,"meseInizio":3,"annoInizio":2026,"durata":24,"giorno":null,"mesiConsuntivati":[]},{"id":12,"descrizione":"R.A. Cerbasi IV trim. 2025 + cons lavoro","categoria":"Altro","importo":351.54,"iva":22,"fornitore":"STATO - AdE","ricorrenza":"mensile","ogni":1,"meseInizio":2,"annoInizio":2026,"durata":null,"giorno":null,"mesiConsuntivati":[2,2,3,2]},{"id":13,"descrizione":"Sito PC - web","categoria":"Altro","importo":813.0,"iva":22,"fornitore":"BELLASIO","ricorrenza":"unatantum","ogni":1,"meseInizio":4,"annoInizio":2026,"durata":1,"giorno":null,"mesiConsuntivati":[]},{"id":14,"descrizione":"Compenso amministratore","categoria":"Altro","importo":1639.0,"iva":22,"fornitore":"DI PIERRO","ricorrenza":"mensile","ogni":1,"meseInizio":2,"annoInizio":2026,"durata":null,"giorno":null,"mesiConsuntivati":[]},{"id":15,"descrizione":"Deposito cauzionale","categoria":"Altro","importo":350.0,"iva":22,"fornitore":"DOPOLAVORO APS","ricorrenza":"mensile","ogni":1,"meseInizio":1,"annoInizio":2026,"durata":null,"giorno":null,"mesiConsuntivati":[1,2,3,4]},{"id":16,"descrizione":"Consulenza commerciale, gestione progetti e client","categoria":"Altro","importo":750.0,"iva":22,"fornitore":"GOBBATO","ricorrenza":"mensile","ogni":1,"meseInizio":1,"annoInizio":2026,"durata":null,"giorno":null,"mesiConsuntivati":[1]},{"id":17,"descrizione":"Black magic design - Programma per editing","categoria":"Altro","importo":311.1,"iva":22,"fornitore":"DAVINCI","ricorrenza":"unatantum","ogni":1,"meseInizio":2,"annoInizio":2026,"durata":1,"giorno":null,"mesiConsuntivati":[2]}],"businessUnit":[{"id":1,"nome":"Social Media","colore":"#2c5f8a","descrizione":"Gestione canali social"},{"id":2,"nome":"Ufficio Stampa","colore":"#a07840","descrizione":"PR e comunicati stampa"},{"id":3,"nome":"Video","colore":"#6b4a9a","descrizione":"Produzione video"},{"id":4,"nome":"Foto","colore":"#2d7a3a","descrizione":"Produzione fotografica"},{"id":5,"nome":"Grafica","colore":"#c0392b","descrizione":"Grafica e identità visiva"},{"id":6,"nome":"Eventi e Progetti","colore":"#7ab0a0","descrizione":"Gestione eventi e progetti speciali"}],"rimborsi":[],"movimentiCassa":[],"nextIdP":18,"nextIdProf":21,"nextIdCF":18,"nextIdBU":7,"nextIdRimb":1,"nextIdMov":1};
+  state.progetti=realData.progetti;
+  state.professionisti=realData.professionisti;
+  state.costiFissi=realData.costiFissi;
+  state.businessUnit=realData.businessUnit;
+  state.rimborsi=realData.rimborsi||[];
+  state.movimentiCassa=realData.movimentiCassa||[];
+  state.nextIdP=realData.nextIdP;
+  state.nextIdProf=realData.nextIdProf;
+  state.nextIdCF=realData.nextIdCF;
+  state.nextIdBU=realData.nextIdBU;
+  state.nextIdRimb=realData.nextIdRimb||1;
+  state.nextIdMov=realData.nextIdMov||1;
   saveState();
 }
-
 loadState();
 loadSampleData();
 selectedMonth=new Date().getMonth()+1;
