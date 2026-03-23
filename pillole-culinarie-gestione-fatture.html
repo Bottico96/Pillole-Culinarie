@@ -256,6 +256,10 @@ textarea{resize:vertical;min-height:60px;}select option{background:var(--surface
           <div class="card"><div class="card-title">📅 Prossime Scadenze da Pagare</div><div id="cf-pagamenti"></div></div>
         </div>
         <div class="card"><div class="card-title">📒 Registro Movimenti</div><div id="cf-movimenti"></div></div>
+        <div class="grid-2" style="margin-top:20px">
+          <div class="card"><div class="card-title" style="color:var(--green)">💰 Fatture Incassate</div><div id="cf-incassate"></div></div>
+          <div class="card"><div class="card-title" style="color:var(--red)">✓ Fatture Pagate</div><div id="cf-pagate"></div></div>
+        </div>
       </div>
     </div>
 
@@ -345,6 +349,26 @@ textarea{resize:vertical;min-height:60px;}select option{background:var(--surface
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModalRimborso()">Annulla</button>
       <button class="btn btn-primary" onclick="saveRimborso()">Salva Spesa</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SPOSTA DATA -->
+<div class="modal-overlay hidden" id="modal-sposta">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-title">📅 Sposta Scadenza</div>
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px" id="sposta-desc-label"></div>
+    <div class="form-group">
+      <label>Nuova data stimata</label>
+      <input type="date" id="sposta-data">
+    </div>
+    <div class="form-group">
+      <label>Motivo (opzionale)</label>
+      <input type="text" id="sposta-motivo" placeholder="es. Cliente ha chiesto proroga, pagamento rimandato...">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeSpostaModal()">Annulla</button>
+      <button class="btn btn-primary" onclick="salvaSpostamento()">Salva</button>
     </div>
   </div>
 </div>
@@ -674,7 +698,7 @@ textarea{resize:vertical;min-height:60px;}select option{background:var(--surface
 
 <script>
 const MESI=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
-let state={progetti:[],professionisti:[],costiFissi:[],businessUnit:[],rimborsi:[],movimentiCassa:[],nextIdP:1,nextIdProf:1,nextIdCF:1,nextIdBU:1,nextIdRimb:1,nextIdMov:1};
+let state={progetti:[],professionisti:[],costiFissi:[],businessUnit:[],rimborsi:[],movimentiCassa:[],dateOverride:{},nextIdP:1,nextIdProf:1,nextIdCF:1,nextIdBU:1,nextIdRimb:1,nextIdMov:1};
 let editingProgettoId=null,editingProfId=null,editingCFId=null,editingBUId=null;
 let vistaCorrente='cons'; // 'cons' | 'bdg' | 'tot'
 let tempCosti=[],tempCompensi=[],tempScadenze=[],tempBUSplit=[];let editingCostoIdx=null;
@@ -1026,13 +1050,17 @@ function entrateAttese(anno){
       const dataFattura=new Date(anno,m-1,28);
       const dataIncasso=new Date(dataFattura.getTime()+60*24*60*60*1000);
       // Controlla se già incassata (mov entrata collegato)
+      const eKey=`e_${p.id}_${m}_${anno}`;
       const giàIncassato=state.movimentiCassa.some(mv=>
         mv.tipo==='entrata'&&mv.progettoId==p.id&&
         new Date(mv.data).getFullYear()==anno&&new Date(mv.data).getMonth()+1==m
       );
       if(!giàIncassato){
+        // Check date override
+        const override=(state.dateOverride||{})[eKey];
+        const dataEff=override?new Date(override):dataIncasso;
         result.push({
-          data:dataIncasso,
+          data:dataEff,
           dataFattura:dataFattura,
           cliente:p.cliente,
           servizio:p.servizio,
@@ -1041,7 +1069,7 @@ function entrateAttese(anno){
           progettoId:p.id,
           mese:m,
           anno:anno,
-          scaduta:dataIncasso<oggi
+          scaduta:dataEff<oggi
         });
       }
     }
@@ -1065,13 +1093,16 @@ function usciteAttese(anno){
         new Date(mv.data).getFullYear()==anno&&new Date(mv.data).getMonth()+1==m
       );
       if(!giàPagato){
+        const uKeyOp=`u_operatore_${prof.nome.replace(/\s/g,'_')}_${m}_${anno}`;
+        const overrideOp=(state.dateOverride||{})[uKeyOp];
+        const dataEffOp=overrideOp?new Date(overrideOp):dataScad;
         result.push({
-          data:dataScad, tipo:'operatore',
+          data:dataEffOp, tipo:'operatore',
           desc:prof.nome+' — '+MESI[m-1],
           controparte:prof.nome,
           importo:tot,
           mese:m,anno:anno,
-          scaduta:dataScad<oggi
+          scaduta:dataEffOp<oggi
         });
       }
     }
@@ -1239,41 +1270,89 @@ function renderCashFlow(){
     <div style="display:flex;gap:4px;align-items:flex-end;height:110px;padding-bottom:4px">${chartRows}</div>
   </div>`;
 
-  // Prossime scadenze da incassare
-  const entrAtt=entrateAttese(anno).slice(0,8);
+  // Prossime scadenze da incassare (tutte, non solo 8)
+  const entrAtt=entrateAttese(anno);
   document.getElementById('cf-incassi').innerHTML=entrAtt.length===0
-    ?'<div style="color:var(--text-muted);font-size:13px">Nessuna entrata attesa.</div>'
-    :entrAtt.map(e=>`
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
-        <div style="flex:1">
-          <div style="font-weight:500;font-size:13px">${e.cliente}</div>
-          <div style="font-size:11px;color:var(--text-muted)">${e.servizio.slice(0,40)} — ${MESI[e.mese-1]}</div>
-          <div style="font-size:11px;color:${e.scaduta?'var(--red)':'var(--text-dim)'}">
+    ?'<div style="color:var(--text-muted);font-size:13px;padding:20px 0;text-align:center">Nessuna entrata attesa — tutto incassato! 🎉</div>'
+    :entrAtt.map((e,i)=>{
+      const eKey=`e_${e.progettoId}_${e.mese}_${e.anno}`;
+      return`<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--border);gap:10px">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:13px">${e.cliente}</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${e.servizio.slice(0,45)} — ${MESI[e.mese-1]} ${e.anno}</div>
+          <div style="font-size:11px;color:${e.scaduta?'var(--red)':'var(--text-dim)'};margin-top:3px">
             ${e.scaduta?'⚠ Scaduta':'📅'} Incasso stimato: ${e.data.toLocaleDateString('it-IT')}
           </div>
         </div>
-        <div style="text-align:right;flex-shrink:0;margin-left:12px">
-          <div style="font-weight:600;color:var(--green)">${fmt(e.importoIva)}</div>
-          <div style="font-size:11px;color:var(--text-dim)">IVA inclusa</div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
+          <div style="font-weight:700;color:var(--green);font-size:14px">${fmt(e.importoIva)}</div>
+          <div style="display:flex;gap:5px">
+            <button onclick="segnaIncassato(${JSON.stringify(e).replace(/"/g,'&quot;')})" 
+              style="background:rgba(45,122,58,0.1);color:var(--green);border:1px solid rgba(45,122,58,0.3);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">
+              💰 Incassato
+            </button>
+            <button onclick="apriSpostaModal('entrata','${eKey}',${e.importoIva},'${e.cliente} — ${MESI[e.mese-1]}','${e.data.toISOString().split('T')[0]}')"
+              style="background:var(--surface2);color:var(--text-muted);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;white-space:nowrap">
+              📅 Sposta
+            </button>
+          </div>
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
 
-  // Prossime scadenze da pagare
-  const uscAtt=usciteAttese(anno).slice(0,8);
+  // Prossime scadenze da pagare (tutte)
+  const uscAtt=usciteAttese(anno);
   document.getElementById('cf-pagamenti').innerHTML=uscAtt.length===0
-    ?'<div style="color:var(--text-muted);font-size:13px">Nessuna uscita attesa.</div>'
-    :uscAtt.map(u=>`
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
-        <div style="flex:1">
-          <div style="font-weight:500;font-size:13px">${u.desc}</div>
-          <div style="font-size:11px;color:var(--text-muted)">${u.controparte}</div>
-          <div style="font-size:11px;color:${u.scaduta?'var(--red)':'var(--text-dim)'}">
+    ?'<div style="color:var(--text-muted);font-size:13px;padding:20px 0;text-align:center">Nessuna uscita attesa — tutto pagato! ✓</div>'
+    :uscAtt.map(u=>{
+      const uKey=`u_${u.tipo}_${u.controparte.replace(/\s/g,'_')}_${u.mese}_${u.anno}`;
+      return`<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--border);gap:10px">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:13px">${u.desc}</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${u.controparte} · ${u.tipo==='fisso'?'Costo fisso':'Operatore'}</div>
+          <div style="font-size:11px;color:${u.scaduta?'var(--red)':'var(--text-dim)'};margin-top:3px">
             ${u.scaduta?'⚠ Scaduta':'📅'} Scadenza: ${u.data.toLocaleDateString('it-IT')}
           </div>
         </div>
-        <div style="text-align:right;flex-shrink:0;margin-left:12px">
-          <div style="font-weight:600;color:var(--red)">${fmt(u.importo)}</div>
-          <div style="font-size:11px;color:var(--text-dim)">${u.tipo==='fisso'?'Costo fisso':'Operatore'}</div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
+          <div style="font-weight:700;color:var(--red);font-size:14px">${fmt(u.importo)}</div>
+          <div style="display:flex;gap:5px">
+            <button onclick="segnaPagato(${JSON.stringify(u).replace(/"/g,'&quot;')})"
+              style="background:rgba(192,57,43,0.1);color:var(--red);border:1px solid rgba(192,57,43,0.3);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">
+              ✓ Pagato
+            </button>
+            <button onclick="apriSpostaModal('uscita','${uKey}',${u.importo},'${u.desc.replace(/'/g,"\'")}','${u.data.toISOString().split('T')[0]}')"
+              style="background:var(--surface2);color:var(--text-muted);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;white-space:nowrap">
+              📅 Sposta
+            </button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+  // Fatture incassate (movimenti entrata da cashflow)
+  const incassate=state.movimentiCassa.filter(m=>m.tipo==='entrata'&&m._daScadenzario);
+  const pagate=state.movimentiCassa.filter(m=>m.tipo==='uscita'&&m._daScadenzario);
+  const elInc=document.getElementById('cf-incassate');
+  const elPag=document.getElementById('cf-pagate');
+  if(elInc) elInc.innerHTML=incassate.length===0
+    ?'<div style="color:var(--text-muted);font-size:13px">Nessuna fattura ancora incassata.</div>'
+    :incassate.map(m=>`<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+        <div><div style="font-weight:500;font-size:13px">${m.desc}</div>
+        <div style="font-size:11px;color:var(--text-dim)">${fmtDate(m.data)}</div></div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-weight:600;color:var(--green)">${fmt(parseFloat(m.importo))}</span>
+          <button onclick="rimuoviMovimento(${m.id},'cf')" style="background:none;border:none;cursor:pointer;color:var(--text-dim);font-size:13px" title="Annulla">↩</button>
+        </div>
+      </div>`).join('');
+  if(elPag) elPag.innerHTML=pagate.length===0
+    ?'<div style="color:var(--text-muted);font-size:13px">Nessuna fattura ancora pagata.</div>'
+    :pagate.map(m=>`<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+        <div><div style="font-weight:500;font-size:13px">${m.desc}</div>
+        <div style="font-size:11px;color:var(--text-dim)">${fmtDate(m.data)}</div></div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-weight:600;color:var(--red)">${fmt(parseFloat(m.importo))}</span>
+          <button onclick="rimuoviMovimento(${m.id},'cf')" style="background:none;border:none;cursor:pointer;color:var(--text-dim);font-size:13px" title="Annulla">↩</button>
         </div>
       </div>`).join('');
 
@@ -1311,6 +1390,74 @@ function renderCashFlow(){
       </tbody>
     </table></div>`;
   }
+}
+
+
+// ── INCASSATO / PAGATO / SPOSTA ───────────────────────────────
+function segnaIncassato(e){
+  const oggi=new Date().toISOString().split('T')[0];
+  const mov={
+    id:state.nextIdMov++,
+    tipo:'entrata',
+    data:oggi,
+    importo:e.importoIva,
+    desc:e.cliente+' — '+e.servizio.slice(0,40)+' — '+MESI[e.mese-1],
+    controparte:e.cliente,
+    categoria:'Incasso fattura cliente',
+    progettoId:e.progettoId,
+    note:'',
+    _daScadenzario:true
+  };
+  state.movimentiCassa.push(mov);
+  saveState();
+  renderCashFlow();
+}
+
+function segnaPagato(u){
+  const oggi=new Date().toISOString().split('T')[0];
+  const mov={
+    id:state.nextIdMov++,
+    tipo:'uscita',
+    data:oggi,
+    importo:u.importo,
+    desc:u.desc,
+    controparte:u.controparte,
+    categoria:u.tipo==='fisso'?'Costo fisso aziendale':'Pagamento collaboratore',
+    progettoId:null,
+    note:'',
+    _daScadenzario:true
+  };
+  state.movimentiCassa.push(mov);
+  saveState();
+  renderCashFlow();
+}
+
+function rimuoviMovimento(id, ctx){
+  if(!confirm('Annullare questo movimento? Tornerà nelle scadenze attive.')) return;
+  state.movimentiCassa=state.movimentiCassa.filter(m=>m.id!==id);
+  saveState();
+  if(ctx==='cf') renderCashFlow();
+  else renderCashFlow();
+}
+
+// Sposta data modal
+let _spostaCtx={};
+function apriSpostaModal(tipo,key,importo,desc,dataCorrente){
+  _spostaCtx={tipo,key,importo,desc};
+  document.getElementById('sposta-desc-label').textContent=desc+' · '+fmt(importo);
+  document.getElementById('sposta-data').value=dataCorrente;
+  document.getElementById('sposta-motivo').value='';
+  document.getElementById('modal-sposta').classList.remove('hidden');
+}
+function closeSpostaModal(){document.getElementById('modal-sposta').classList.add('hidden');}
+function salvaSpostamento(){
+  const nuovaData=document.getElementById('sposta-data').value;
+  if(!nuovaData){alert('Inserisci una data.');return;}
+  if(!state.dateOverride) state.dateOverride={};
+  state.dateOverride[_spostaCtx.key]=nuovaData;
+  saveState();
+  closeSpostaModal();
+  renderCashFlow();
 }
 
 // ── MODAL MOVIMENTO ───────────────────────────────────────────
@@ -2198,6 +2345,7 @@ function loadSampleData(){
   state.nextIdBU=realData.nextIdBU;
   state.nextIdRimb=realData.nextIdRimb||1;
   state.nextIdMov=realData.nextIdMov||1;
+  state.dateOverride=realData.dateOverride||{};
   saveState();
 }
 loadState();
