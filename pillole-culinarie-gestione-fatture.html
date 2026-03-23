@@ -1051,10 +1051,7 @@ function entrateAttese(anno){
       const dataIncasso=new Date(dataFattura.getTime()+60*24*60*60*1000);
       // Controlla se già incassata (mov entrata collegato)
       const eKey=`e_${p.id}_${m}_${anno}`;
-      const giàIncassato=state.movimentiCassa.some(mv=>
-        mv.tipo==='entrata'&&mv.progettoId==p.id&&
-        new Date(mv.data).getFullYear()==anno&&new Date(mv.data).getMonth()+1==m
-      );
+      const giàIncassato=state.movimentiCassa.some(mv=>mv._scadKey===eKey);
       if(!giàIncassato){
         // Check date override
         const override=(state.dateOverride||{})[eKey];
@@ -1087,13 +1084,9 @@ function usciteAttese(anno){
       const tot=totaleProfMese(prof,anno,m);
       if(tot<=0) continue;
       const dataScad=new Date(anno,m,15); // 15 del mese successivo
-      const giàPagato=state.movimentiCassa.some(mv=>
-        mv.tipo==='uscita'&&mv.controparte&&
-        mv.controparte.toUpperCase().includes(prof.nome.split(' ')[0].toUpperCase())&&
-        new Date(mv.data).getFullYear()==anno&&new Date(mv.data).getMonth()+1==m
-      );
+      const uKeyOp=`u_operatore_${prof.nome.replace(/\s/g,'_')}_${m}_${anno}`;
+      const giàPagato=state.movimentiCassa.some(mv=>mv._scadKey===uKeyOp);
       if(!giàPagato){
-        const uKeyOp=`u_operatore_${prof.nome.replace(/\s/g,'_')}_${m}_${anno}`;
         const overrideOp=(state.dateOverride||{})[uKeyOp];
         const dataEffOp=overrideOp?new Date(overrideOp):dataScad;
         result.push({
@@ -1102,7 +1095,8 @@ function usciteAttese(anno){
           controparte:prof.nome,
           importo:tot,
           mese:m,anno:anno,
-          scaduta:dataEffOp<oggi
+          scaduta:dataEffOp<oggi,
+          _key:uKeyOp
         });
       }
     }
@@ -1114,10 +1108,8 @@ function usciteAttese(anno){
       if(imp<=0) continue;
       const giorno=cf.giorno||1;
       const dataScad=new Date(anno,m-1,giorno);
-      const giàPagato=state.movimentiCassa.some(mv=>
-        mv.tipo==='uscita'&&mv.desc&&mv.desc.includes(cf.descrizione)&&
-        new Date(mv.data).getFullYear()==anno&&new Date(mv.data).getMonth()+1==m
-      );
+      const uKeyCf=`u_fisso_${cf.id}_${m}_${anno}`;
+      const giàPagato=state.movimentiCassa.some(mv=>mv._scadKey===uKeyCf);
       if(!giàPagato){
         result.push({
           data:dataScad, tipo:'fisso',
@@ -1125,7 +1117,8 @@ function usciteAttese(anno){
           controparte:cf.fornitore,
           importo:applyIva(imp,parseFloat(cf.iva)||0),
           mese:m,anno:anno,
-          scaduta:dataScad<oggi
+          scaduta:dataScad<oggi,
+          _key:uKeyCf
         });
       }
     }
@@ -1271,7 +1264,8 @@ function renderCashFlow(){
   </div>`;
 
   // Prossime scadenze da incassare (tutte, non solo 8)
-  const entrAtt=entrateAttese(anno);
+  const oggi2m=new Date(); oggi2m.setMonth(oggi2m.getMonth()+2);
+  const entrAtt=entrateAttese(anno).filter(e=>e.data<=oggi2m);
   document.getElementById('cf-incassi').innerHTML=entrAtt.length===0
     ?'<div style="color:var(--text-muted);font-size:13px;padding:20px 0;text-align:center">Nessuna entrata attesa — tutto incassato! 🎉</div>'
     :entrAtt.map((e,i)=>{
@@ -1301,7 +1295,7 @@ function renderCashFlow(){
     }).join('');
 
   // Prossime scadenze da pagare (tutte)
-  const uscAtt=usciteAttese(anno);
+  const uscAtt=usciteAttese(anno).filter(u=>u.data<=oggi2m);
   document.getElementById('cf-pagamenti').innerHTML=uscAtt.length===0
     ?'<div style="color:var(--text-muted);font-size:13px;padding:20px 0;text-align:center">Nessuna uscita attesa — tutto pagato! ✓</div>'
     :uscAtt.map(u=>{
@@ -1395,6 +1389,9 @@ function renderCashFlow(){
 
 // ── INCASSATO / PAGATO / SPOSTA ───────────────────────────────
 function segnaIncassato(e){
+  const eKey=`e_${e.progettoId}_${e.mese}_${e.anno}`;
+  // Evita doppio click
+  if(state.movimentiCassa.some(mv=>mv._scadKey===eKey)) return;
   const oggi=new Date().toISOString().split('T')[0];
   const mov={
     id:state.nextIdMov++,
@@ -1406,7 +1403,8 @@ function segnaIncassato(e){
     categoria:'Incasso fattura cliente',
     progettoId:e.progettoId,
     note:'',
-    _daScadenzario:true
+    _daScadenzario:true,
+    _scadKey:eKey
   };
   state.movimentiCassa.push(mov);
   saveState();
@@ -1414,6 +1412,9 @@ function segnaIncassato(e){
 }
 
 function segnaPagato(u){
+  const uKey=u._key||`u_${u.tipo}_${(u.controparte||'').replace(/\s/g,'_')}_${u.mese}_${u.anno}`;
+  // Evita doppio click
+  if(state.movimentiCassa.some(mv=>mv._scadKey===uKey)) return;
   const oggi=new Date().toISOString().split('T')[0];
   const mov={
     id:state.nextIdMov++,
@@ -1425,7 +1426,8 @@ function segnaPagato(u){
     categoria:u.tipo==='fisso'?'Costo fisso aziendale':'Pagamento collaboratore',
     progettoId:null,
     note:'',
-    _daScadenzario:true
+    _daScadenzario:true,
+    _scadKey:uKey
   };
   state.movimentiCassa.push(mov);
   saveState();
