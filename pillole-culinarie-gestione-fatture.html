@@ -1111,13 +1111,15 @@ function usciteAttese(anno){
       const uKeyCf=`u_fisso_${cf.id}_${m}_${anno}`;
       const giàPagato=state.movimentiCassa.some(mv=>mv._scadKey===uKeyCf);
       if(!giàPagato){
+        const overrideCf=(state.dateOverride||{})[uKeyCf];
+        const dataEffCf=overrideCf?new Date(overrideCf):dataScad;
         result.push({
-          data:dataScad, tipo:'fisso',
+          data:dataEffCf, tipo:'fisso',
           desc:cf.descrizione,
           controparte:cf.fornitore,
           importo:applyIva(imp,parseFloat(cf.iva)||0),
           mese:m,anno:anno,
-          scaduta:dataScad<oggi,
+          scaduta:dataEffCf<oggi,
           _key:uKeyCf
         });
       }
@@ -1299,7 +1301,9 @@ function renderCashFlow(){
   document.getElementById('cf-pagamenti').innerHTML=uscAtt.length===0
     ?'<div style="color:var(--text-muted);font-size:13px;padding:20px 0;text-align:center">Nessuna uscita attesa — tutto pagato! ✓</div>'
     :uscAtt.map(u=>{
-      const uKey=`u_${u.tipo}_${u.controparte.replace(/\s/g,'_')}_${u.mese}_${u.anno}`;
+      const uKey=u._key||`u_${u.tipo}_${(u.controparte||'').replace(/\s/g,'_')}_${u.mese}_${u.anno}`;
+      const dataStr=u.data instanceof Date?u.data.toISOString().split('T')[0]:u.data;
+      const descSafe=(u.desc||'').replace(/'/g,'').replace(/"/g,'');
       return`<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--border);gap:10px">
         <div style="flex:1;min-width:0">
           <div style="font-weight:600;font-size:13px">${u.desc}</div>
@@ -1315,7 +1319,7 @@ function renderCashFlow(){
               style="background:rgba(192,57,43,0.1);color:var(--red);border:1px solid rgba(192,57,43,0.3);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">
               ✓ Pagato
             </button>
-            <button onclick="apriSpostaModal('uscita','${uKey}',${u.importo},'${u.desc.replace(/'/g,"\'")}','${u.data.toISOString().split('T')[0]}')"
+            <button onclick="apriSpostaModal('uscita','${uKey}',${u.importo},'${descSafe}','${dataStr}')"
               style="background:var(--surface2);color:var(--text-muted);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;white-space:nowrap">
               📅 Sposta
             </button>
