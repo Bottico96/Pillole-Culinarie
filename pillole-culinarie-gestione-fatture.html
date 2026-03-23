@@ -698,7 +698,7 @@ textarea{resize:vertical;min-height:60px;}select option{background:var(--surface
 
 <script>
 const MESI=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
-let state={progetti:[],professionisti:[],costiFissi:[],businessUnit:[],rimborsi:[],movimentiCassa:[],dateOverride:{},nextIdP:1,nextIdProf:1,nextIdCF:1,nextIdBU:1,nextIdRimb:1,nextIdMov:1};
+let state={progetti:[],professionisti:[],costiFissi:[],businessUnit:[],rimborsi:[],movimentiCassa:[],dateOverride:{},fattureEmesse:[],fattureRicevute:[],nextIdP:1,nextIdProf:1,nextIdCF:1,nextIdBU:1,nextIdRimb:1,nextIdMov:1};
 let editingProgettoId=null,editingProfId=null,editingCFId=null,editingBUId=null;
 let vistaCorrente='cons'; // 'cons' | 'bdg' | 'tot'
 let tempCosti=[],tempCompensi=[],tempScadenze=[],tempBUSplit=[];let editingCostoIdx=null;
@@ -901,6 +901,39 @@ function addBUSplit(){
 }
 function removeBUSplit(i){tempBUSplit.splice(i,1);renderBUSplitList();}
 
+
+
+// ── FATTURE CALENDARIO ────────────────────────────────────────
+function segnaFatturaEmessa(key,cliente,servizio,importo,mese,anno){
+  if(state.fattureEmesse.some(f=>f._key===key)) return; // no duplicates
+  state.fattureEmesse.push({
+    _key:key, cliente, servizio, importo,
+    mese, anno, data:new Date().toISOString().split('T')[0]
+  });
+  saveState();
+  renderCalMese(anno,mese);
+}
+function segnaFatturaRicevuta(key,profNome,importo,mese,anno){
+  if(state.fattureRicevute.some(f=>f._key===key)) return; // no duplicates
+  state.fattureRicevute.push({
+    _key:key, profNome, importo,
+    mese, anno, data:new Date().toISOString().split('T')[0]
+  });
+  saveState();
+  renderCalMese(anno,mese);
+}
+function annullaFatturaEmessa(key,anno,mese){
+  if(!confirm('Annullare? La fattura tornerà nelle "da emettere".')) return;
+  state.fattureEmesse=state.fattureEmesse.filter(f=>f._key!==key);
+  saveState();
+  renderCalMese(anno,mese);
+}
+function annullaFatturaRicevuta(key,anno,mese){
+  if(!confirm('Annullare? La fattura tornerà nelle "da ricevere".')) return;
+  state.fattureRicevute=state.fattureRicevute.filter(f=>f._key!==key);
+  saveState();
+  renderCalMese(anno,mese);
+}
 
 // ── RIMBORSO SPESE ─────────────────────────────────────────────
 const RIMB_CAT_ICONS={'Trasporto':'🚆','Alloggio':'🏨','Vitto':'🍽️','Carburante':'⛽','Materiali':'📦','Comunicazione':'📱','Altro':'📎'};
@@ -1911,20 +1944,44 @@ function renderCalMese(anno,mese){
     <div class="grid-2" style="margin-bottom:16px">
       <div class="card">
         <div class="card-title">📤 Fatture da Emettere ai Clienti</div>
-        ${righeClienti.length===0?'<div class="text-muted" style="font-size:13px">Nessuna fattura questo mese.</div>':`
-        <div class="table-wrap"><table>
-          <thead><tr><th>Cliente</th><th>Servizio</th><th>Tipo</th><th>Scadenza</th><th class="text-right">Imponibile</th><th class="text-right">Con IVA 22%</th></tr></thead>
+        ${(()=>{
+          const pendenti=righeClienti.filter(r=>{
+            const fKey=`fe_${r.cliente}_${r.servizio.slice(0,20)}_${mese}_${anno}`;
+            return !state.fattureEmesse.some(f=>f._key===fKey);
+          });
+          if(pendenti.length===0) return '<div class="text-muted" style="font-size:13px">Tutte le fatture sono state emesse ✓</div>';
+          return `<div class="table-wrap"><table>
+          <thead><tr><th>Cliente</th><th>Servizio</th><th>Tipo</th><th class="text-right">Imponibile</th><th class="text-right">Con IVA</th><th></th></tr></thead>
           <tbody>
-            ${righeClienti.map(r=>`<tr><td class="fw-500">${r.cliente}</td><td class="text-muted">${r.servizio}${r.desc?'<br><span style="font-size:11px;color:var(--text-dim)">'+r.desc+'</span>':''}</td><td>${r.tipo==='spot'?'<span class="badge badge-blue">Spot</span>':'<span class="badge badge-gold">Mensile</span>'}</td><td style="font-size:12px;color:var(--text-muted)">${r.data?fmtDate(r.data):'—'}</td><td class="text-right text-gold">${fmt(r.importo)}</td><td class="text-right">${fmt(r.importo*1.22)}</td></tr>`).join('')}
-            <tr style="background:rgba(160,120,64,0.05)"><td colspan="4" class="fw-500">TOTALE</td><td class="text-right text-gold fw-500">${fmt(totF)}</td><td class="text-right fw-500">${fmt(totF*1.22)}</td></tr>
+            ${pendenti.map(r=>{
+              const fKey=`fe_${r.cliente}_${r.servizio.slice(0,20)}_${mese}_${anno}`;
+              return`<tr>
+                <td class="fw-500">${r.cliente}</td>
+                <td class="text-muted">${r.servizio}${r.desc?'<br><span style="font-size:11px;color:var(--text-dim)">'+r.desc+'</span>':''}</td>
+                <td>${r.tipo==='spot'?'<span class="badge badge-blue">Spot</span>':'<span class="badge badge-gold">Mensile</span>'}</td>
+                <td class="text-right text-gold">${fmt(r.importo)}</td>
+                <td class="text-right">${fmt(r.importo*1.22)}</td>
+                <td><button onclick="segnaFatturaEmessa('${fKey}','${r.cliente}','${r.servizio.replace(/'/g,'').slice(0,30)}',${r.importo},${mese},${anno})"
+                  style="background:rgba(45,122,58,0.1);color:var(--green);border:1px solid rgba(45,122,58,0.3);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">
+                  ✓ Emessa
+                </button></td>
+              </tr>`;}).join('')}
+            <tr style="background:rgba(160,120,64,0.05)"><td colspan="3" class="fw-500">TOTALE DA EMETTERE</td><td class="text-right text-gold fw-500">${fmt(pendenti.reduce((a,r)=>a+r.importo,0))}</td><td class="text-right fw-500">${fmt(pendenti.reduce((a,r)=>a+r.importo*1.22,0))}</td><td></td></tr>
           </tbody>
-        </table></div>`}
+        </table></div>`;
+        })()}
       </div>
       <div class="card">
         <div class="card-title">📥 Fatture da Ricevere dai Professionisti</div>
-        ${Object.keys(profMap).length===0?'<div class="text-muted" style="font-size:13px">Nessun costo questo mese.</div>':
-          Object.values(profMap).map(({prof,entries})=>{
+        ${(()=>{
+          const profPendenti=Object.values(profMap).filter(({prof})=>{
+            const rKey=`fr_${prof.id}_${mese}_${anno}`;
+            return !state.fattureRicevute.some(f=>f._key===rKey);
+          });
+          if(profPendenti.length===0) return '<div class="text-muted" style="font-size:13px">Tutte le fatture sono state ricevute ✓</div>';
+          return profPendenti.map(({prof,entries})=>{
             const tot=entries.reduce((a,e)=>a+e.importo,0);
+            const rKey=`fr_${prof.id}_${mese}_${anno}`;
             return `<div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)">
               <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
                 <div><div class="fw-500">${prof.nome} <span style="font-size:12px;color:var(--text-dim);font-weight:400">${prof.ruolo}</span></div>
@@ -1932,11 +1989,17 @@ function renderCalMese(anno,mese){
                 <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;margin-left:10px">
                   <span class="badge badge-red">${fmt(tot)}</span>
                   ${prof.email?`<button class="btn btn-email btn-sm" onclick="openEmailPreview(${prof.id},${anno},${mese})">✉ Email</button>`:''}
+                  <button onclick="segnaFatturaRicevuta('${rKey}','${prof.nome.replace(/'/g,'')}',${tot},${mese},${anno})"
+                    style="background:rgba(192,57,43,0.1);color:var(--red);border:1px solid rgba(192,57,43,0.3);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">
+                    ✓ Ricevuta
+                  </button>
                 </div>
               </div>
               ${entries.map(e=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;color:var(--text-muted)"><span>${e.fisso?'🔒 ':''}${e.desc}</span><span>${fmt(e.importo)}</span></div>`).join('')}
-            </div>`;}).join('')}
-        ${Object.keys(profMap).length>0?`<div style="display:flex;justify-content:space-between;font-weight:500;padding-top:8px;border-top:1px solid var(--border)"><span>Totale Professionisti</span><span class="text-red">${fmt(totCOp)}</span></div>`:''}
+            </div>`;
+          }).join('')+
+          (profPendenti.length>0?`<div style="display:flex;justify-content:space-between;font-weight:500;padding-top:8px;border-top:1px solid var(--border)"><span>Totale da ricevere</span><span class="text-red">${fmt(profPendenti.reduce((a,{entries})=>a+entries.reduce((b,e)=>b+e.importo,0),0))}</span></div>`:'');
+        })()}
       </div>
     </div>
     <div class="card">
@@ -2352,6 +2415,8 @@ function loadSampleData(){
   state.nextIdRimb=realData.nextIdRimb||1;
   state.nextIdMov=realData.nextIdMov||1;
   state.dateOverride=realData.dateOverride||{};
+  state.fattureEmesse=realData.fattureEmesse||[];
+  state.fattureRicevute=realData.fattureRicevute||[];
   saveState();
 }
 loadState();
