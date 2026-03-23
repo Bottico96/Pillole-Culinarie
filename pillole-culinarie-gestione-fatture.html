@@ -913,10 +913,10 @@ function segnaFatturaEmessa(key,cliente,servizio,importo,mese,anno){
   saveState();
   renderCalMese(anno,mese);
 }
-function segnaFatturaRicevuta(key,profNome,importo,mese,anno){
+function segnaFatturaRicevuta(key,profNome,voceDes,importo,mese,anno){
   if(state.fattureRicevute.some(f=>f._key===key)) return; // no duplicates
   state.fattureRicevute.push({
-    _key:key, profNome, importo,
+    _key:key, profNome, voceDes, importo,
     mese, anno, data:new Date().toISOString().split('T')[0]
   });
   saveState();
@@ -1961,7 +1961,7 @@ function renderCalMese(anno,mese){
                 <td>${r.tipo==='spot'?'<span class="badge badge-blue">Spot</span>':'<span class="badge badge-gold">Mensile</span>'}</td>
                 <td class="text-right text-gold">${fmt(r.importo)}</td>
                 <td class="text-right">${fmt(r.importo*1.22)}</td>
-                <td><button onclick="segnaFatturaEmessa('${fKey}','${r.cliente}','${r.servizio.replace(/'/g,'').slice(0,30)}',${r.importo},${mese},${anno})"
+                <td><button onclick="segnaFatturaEmessa('${fKey}','${r.cliente.replace(/['\"]/g,'')}','${r.servizio.replace(/['\"&<>]/g,'').slice(0,30)}',${r.importo},${mese},${anno})"
                   style="background:rgba(45,122,58,0.1);color:var(--green);border:1px solid rgba(45,122,58,0.3);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">
                   ✓ Emessa
                 </button></td>
@@ -1974,31 +1974,47 @@ function renderCalMese(anno,mese){
       <div class="card">
         <div class="card-title">📥 Fatture da Ricevere dai Professionisti</div>
         ${(()=>{
-          const profPendenti=Object.values(profMap).filter(({prof})=>{
-            const rKey=`fr_${prof.id}_${mese}_${anno}`;
-            return !state.fattureRicevute.some(f=>f._key===rKey);
-          });
-          if(profPendenti.length===0) return '<div class="text-muted" style="font-size:13px">Tutte le fatture sono state ricevute ✓</div>';
-          return profPendenti.map(({prof,entries})=>{
-            const tot=entries.reduce((a,e)=>a+e.importo,0);
-            const rKey=`fr_${prof.id}_${mese}_${anno}`;
+          // Per ogni professionista, per ogni voce, tasto "Ricevuta" individuale
+          let hasPendenti=false;
+          let html=Object.values(profMap).map(({prof,entries})=>{
+            // Filtra solo voci non ancora ricevute
+            const vocePendenti=entries.filter((e,ei)=>{
+              const vKey='fr_'+prof.id+'_'+ei+'_'+mese+'_'+anno;
+              return !state.fattureRicevute.some(f=>f._key===vKey);
+            });
+            if(vocePendenti.length===0) return '';
+            hasPendenti=true;
+            const tot=vocePendenti.reduce((a,e)=>a+e.importo,0);
             return `<div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)">
               <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-                <div><div class="fw-500">${prof.nome} <span style="font-size:12px;color:var(--text-dim);font-weight:400">${prof.ruolo}</span></div>
-                ${prof.piva?`<span class="piva-tag" style="margin-top:4px">P.IVA ${prof.piva}</span>`:'<span class="piva-missing" style="margin-top:4px">⚠ P.IVA mancante</span>'}</div>
+                <div>
+                  <div class="fw-500">${prof.nome} <span style="font-size:12px;color:var(--text-dim);font-weight:400">${prof.ruolo}</span></div>
+                  ${prof.piva?`<span class="piva-tag" style="margin-top:4px">P.IVA ${prof.piva}</span>`:'<span class="piva-missing" style="margin-top:4px">⚠ P.IVA mancante</span>'}
+                </div>
                 <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;margin-left:10px">
                   <span class="badge badge-red">${fmt(tot)}</span>
                   ${prof.email?`<button class="btn btn-email btn-sm" onclick="openEmailPreview(${prof.id},${anno},${mese})">✉ Email</button>`:''}
-                  <button onclick="segnaFatturaRicevuta('${rKey}','${prof.nome.replace(/'/g,'')}',${tot},${mese},${anno})"
-                    style="background:rgba(192,57,43,0.1);color:var(--red);border:1px solid rgba(192,57,43,0.3);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">
-                    ✓ Ricevuta
-                  </button>
                 </div>
               </div>
-              ${entries.map(e=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;color:var(--text-muted)"><span>${e.fisso?'🔒 ':''}${e.desc}</span><span>${fmt(e.importo)}</span></div>`).join('')}
+              ${vocePendenti.map((e,ei)=>{
+                const vKey='fr_'+prof.id+'_'+ei+'_'+mese+'_'+anno;
+                const profNomeSafe=prof.nome.replace(/['"]/g,'');
+                const vDesSafe=(e.desc||'').replace(/['"&<>]/g,'').slice(0,30);
+                return`<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(46,44,41,0.3)">
+                  <span style="font-size:12px;color:var(--text-muted)">${e.fisso?'🔒 ':''}${e.desc}</span>
+                  <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+                    <span style="font-size:12px;font-weight:500">${fmt(e.importo)}</span>
+                    <button onclick="segnaFatturaRicevuta('${vKey}','${profNomeSafe}','${vDesSafe}',${e.importo},${mese},${anno})"
+                      style="background:rgba(192,57,43,0.1);color:var(--red);border:1px solid rgba(192,57,43,0.3);border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">
+                      ✓ Ricevuta
+                    </button>
+                  </div>
+                </div>`;
+              }).join('')}
             </div>`;
-          }).join('')+
-          (profPendenti.length>0?`<div style="display:flex;justify-content:space-between;font-weight:500;padding-top:8px;border-top:1px solid var(--border)"><span>Totale da ricevere</span><span class="text-red">${fmt(profPendenti.reduce((a,{entries})=>a+entries.reduce((b,e)=>b+e.importo,0),0))}</span></div>`:'');
+          }).join('');
+          if(!hasPendenti) return '<div class="text-muted" style="font-size:13px">Tutte le fatture sono state ricevute ✓</div>';
+          return html;
         })()}
       </div>
     </div>
@@ -2065,6 +2081,52 @@ function renderCalMese(anno,mese){
           <span style="font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:500;color:${mg>=0?'var(--green)':'var(--red)'}">Margine Netto ${MESI[mese-1]}: ${fmtS(mg)}</span>
           <span style="font-size:12px;color:var(--text-muted)">${fmtS(totF)} − ${fmtS(totCOp)} − ${fmtS(totCF)} = <strong style="color:${mg>=0?'var(--green)':'var(--red)'}">${fmtS(mg)}</strong></span>
         </div>
+      </div>
+    </div>
+    <div class="grid-2" style="margin-top:20px">
+      <div class="card" style="border-top:3px solid var(--green)">
+        <div class="card-title" style="color:var(--green)">✓ Fatture Emesse – ${MESI[mese-1]} ${anno}</div>
+        ${(()=>{
+          const emesse=state.fattureEmesse.filter(f=>f.mese===mese&&f.anno===anno);
+          if(emesse.length===0) return '<div style="color:var(--text-muted);font-size:13px;padding:10px 0">Nessuna fattura ancora emessa — clicca "✓ Emessa" nella lista sopra.</div>';
+          const totE=emesse.reduce((a,f)=>a+(parseFloat(f.importo)||0),0);
+          return emesse.map(f=>`
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+              <div>
+                <div style="font-weight:600;font-size:13px">${f.cliente}</div>
+                <div style="font-size:11px;color:var(--text-dim)">${f.servizio} · ${fmtDate(f.data)}</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-weight:700;color:var(--green)">${fmt(parseFloat(f.importo)||0)}</span>
+                <button onclick="annullaFatturaEmessa('${f._key}',${anno},${mese})" title="Annulla" style="background:none;border:none;cursor:pointer;color:var(--text-dim);font-size:15px">↩</button>
+              </div>
+            </div>`).join('')+
+            `<div style="display:flex;justify-content:space-between;padding-top:10px;border-top:2px solid var(--border);font-weight:700;margin-top:4px">
+              <span>Totale emesso</span><span style="color:var(--green)">${fmt(totE)}</span>
+            </div>`;
+        })()}
+      </div>
+      <div class="card" style="border-top:3px solid var(--red)">
+        <div class="card-title" style="color:var(--red)">✓ Fatture Ricevute – ${MESI[mese-1]} ${anno}</div>
+        ${(()=>{
+          const ricevute=state.fattureRicevute.filter(f=>f.mese===mese&&f.anno===anno);
+          if(ricevute.length===0) return '<div style="color:var(--text-muted);font-size:13px;padding:10px 0">Nessuna fattura ancora ricevuta — clicca "✓ Ricevuta" nella lista sopra.</div>';
+          const totR=ricevute.reduce((a,f)=>a+(parseFloat(f.importo)||0),0);
+          return ricevute.map(f=>`
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+              <div>
+                <div style="font-weight:600;font-size:13px">${f.profNome||f.cliente}</div>
+                <div style="font-size:11px;color:var(--text-dim)">${f.voceDes||f.servizio||''} · ${fmtDate(f.data)}</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-weight:700;color:var(--red)">${fmt(parseFloat(f.importo)||0)}</span>
+                <button onclick="annullaFatturaRicevuta('${f._key}',${anno},${mese})" title="Annulla" style="background:none;border:none;cursor:pointer;color:var(--text-dim);font-size:15px">↩</button>
+              </div>
+            </div>`).join('')+
+            `<div style="display:flex;justify-content:space-between;padding-top:10px;border-top:2px solid var(--border);font-weight:700;margin-top:4px">
+              <span>Totale ricevuto</span><span style="color:var(--red)">${fmt(totR)}</span>
+            </div>`;
+        })()}
       </div>
     </div>`;
 }
