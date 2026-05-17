@@ -8,11 +8,12 @@ import { useData } from '../../hooks/useData'
 /* ── Calcolo ─────────────────────────────────────────────────── */
 function prevCompute(p) {
   let costoTot = 0
+  const durataContratto = parseFloat(p.durata) || 1
   ;(p.righe || []).forEach(r => {
     const cn = parseFloat(r.costoNetto) || 0
     const imposte = cn * 0.04 + 2
-    const mesi = parseFloat(r.mesi) || 1
-    costoTot += (cn + imposte) * (parseFloat(r.output) || 1) * mesi
+    const moltiplica = r.ricorrente ? durataContratto : 1
+    costoTot += (cn + imposte) * (parseFloat(r.output) || 1) * moltiplica
   })
   const molt = parseFloat(p.moltiplicatore) || 0.63
   const prezzoAuto = molt > 0 ? costoTot / molt : 0
@@ -107,7 +108,7 @@ function PrevModal({ preventivo, clienti, servizi, onClose, onSave }) {
   const svcsPerCentro = useCallback(cc => servizi.filter(s => s.centroCosto === cc), [servizi])
 
   function addRiga() {
-    const r = { _k: Math.random().toString(36).slice(2), centroCosto: centri[0]||'', servizioId:'', servizio:'', operatore:'', costoNetto:'', output:1, mesi: form.tipoContratto === 'ricorrente' ? (form.durata||12) : 1, tipologia:'Costo Variabile' }
+    const r = { _k: Math.random().toString(36).slice(2), centroCosto: centri[0]||'', servizioId:'', servizio:'', operatore:'', costoNetto:'', output:1, ricorrente: form.tipoContratto === 'ricorrente', tipologia:'Costo Variabile' }
     const svcs = svcsPerCentro(r.centroCosto)
     if (svcs.length) { r.servizioId = svcs[0]._fsId; r.servizio = svcs[0].nome; r.costoNetto = svcs[0].costoNetto || '' }
     setForm(f => ({ ...f, righe: [...f.righe, r] }))
@@ -346,10 +347,11 @@ function PrevModal({ preventivo, clienti, servizi, onClose, onSave }) {
 
             {form.righe.map(r => {
               const svcs = svcsPerCentro(r.centroCosto)
-              const lordo = ((parseFloat(r.costoNetto)||0) * 1.04 + 2) * (parseFloat(r.output)||1) * (parseFloat(r.mesi)||1)
+              const durata = parseFloat(form.durata) || 1
+              const lordo = ((parseFloat(r.costoNetto)||0) * 1.04 + 2) * (parseFloat(r.output)||1) * (r.ricorrente ? durata : 1)
               return (
                 <div key={r._k} style={{ border:'1.5px solid var(--line)', borderRadius:10, padding:'14px 16px', marginBottom:10, background:'#fff' }}>
-                  <div style={{ display:'grid', gridTemplateColumns:'150px 1fr 130px 80px 70px 60px', gap:10, alignItems:'end' }}>
+                  <div style={{ display:'grid', gridTemplateColumns:'150px 1fr 130px 80px 80px 60px', gap:10, alignItems:'end' }}>
                     <div>
                       <label style={S.label}>Centro costo</label>
                       <select style={inputStyle(false)} value={r.centroCosto} onChange={e => updateRiga(r._k, { centroCosto: e.target.value })}>
@@ -377,11 +379,14 @@ function PrevModal({ preventivo, clienti, servizi, onClose, onSave }) {
                       <input type="number" min="1" style={{ ...inputStyle(false), textAlign:'center' }}
                         value={r.output} onChange={e => updateRiga(r._k, { output: e.target.value })} />
                     </div>
-                    <div>
-                      <label style={S.label}>Mesi</label>
-                      <input type="number" min="1" max="120" style={{ ...inputStyle(false), textAlign:'center' }}
-                        value={r.mesi||1} onChange={e => updateRiga(r._k, { mesi: e.target.value })}
-                        title="Mesi di competenza del costo" />
+                    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
+                      <label style={{ ...S.label, textAlign:'center' }}>Mensile</label>
+                      <div
+                        onClick={() => updateRiga(r._k, { ricorrente: !r.ricorrente })}
+                        style={{ width:42, height:24, borderRadius:99, background: r.ricorrente ? 'var(--teal)' : 'var(--line)', cursor:'pointer', position:'relative', transition:'background .2s', flexShrink:0 }}>
+                        <div style={{ position:'absolute', top:3, left: r.ricorrente ? 21 : 3, width:18, height:18, borderRadius:'50%', background:'#fff', transition:'left .2s', boxShadow:'0 1px 3px rgba(0,0,0,.2)' }} />
+                      </div>
+                      <span style={{ fontSize:10, color: r.ricorrente ? 'var(--teal-d)' : 'var(--muted)', fontWeight:600 }}>{r.ricorrente ? `×${form.durata||12}m` : '×1'}</span>
                     </div>
                     <div style={{ display:'flex', alignItems:'flex-end', paddingBottom:2 }}>
                       <button onClick={() => setForm(f => ({ ...f, righe: f.righe.filter(x => x._k !== r._k) }))}
