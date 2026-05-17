@@ -287,9 +287,40 @@ function PrevModal({ preventivo, clienti, servizi, onClose, onSave }) {
                   <option value="consuntivo">A consuntivo</option>
                   <option value="anticipata">Anticipata</option>
                   <option value="rate">A rate</option>
+                  <option value="acconto_saldo">Acconto + Saldo</option>
                 </select>
               </div>
             </div>
+            {form.modalitaFatturazione === 'acconto_saldo' && (
+              <div style={{ marginTop:12, background:'var(--cream-d)', borderRadius:10, padding:'14px 16px' }}>
+                <div style={{ fontSize:12, fontWeight:700, textTransform:'uppercase', letterSpacing:'.4px', marginBottom:12, color:'var(--muted)' }}>Dettaglio Acconto + Saldo</div>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                  <div style={S.group}>
+                    <label style={S.label}>% Acconto</label>
+                    <input type="number" min="1" max="99" style={inputStyle(false)}
+                      value={form.percentualeAcconto||50}
+                      onChange={e => set('percentualeAcconto', parseInt(e.target.value)||50)} />
+                  </div>
+                  <div style={S.group}>
+                    <label style={S.label}>Data acconto</label>
+                    <input type="date" style={inputStyle(false)}
+                      value={form.dataAcconto||''}
+                      onChange={e => set('dataAcconto', e.target.value)} />
+                  </div>
+                  <div style={S.group}>
+                    <label style={S.label}>% Saldo (automatico)</label>
+                    <input type="number" style={{ ...inputStyle(false), background:'#f5f5f5', color:'var(--muted)' }}
+                      value={100-(form.percentualeAcconto||50)} disabled />
+                  </div>
+                  <div style={S.group}>
+                    <label style={S.label}>Data saldo (vuoto = chiusura progetto)</label>
+                    <input type="date" style={inputStyle(false)}
+                      value={form.dataSaldo||''}
+                      onChange={e => set('dataSaldo', e.target.value)} />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Righe servizi */}
@@ -427,6 +458,9 @@ function WizardAccettazione({ preventivo, clienti, professionisti, onClose, onDo
   const [annoInizio, setAnnoInizio] = useState(preventivo.annoInizio || 2026)
   const [durata, setDurata] = useState(preventivo.durata || 12)
   const [modalitaFatturazione, setModalitaFatturazione] = useState(preventivo.modalitaFatturazione || 'consuntivo')
+  const [percentualeAcconto, setPercentualeAcconto] = useState(preventivo.percentualeAcconto || 50)
+  const [dataAcconto, setDataAcconto] = useState(preventivo.dataAcconto || '')
+  const [dataSaldo, setDataSaldo] = useState(preventivo.dataSaldo || '')
 
   // Step 2 — cliente
   const clienteEsistente = clienti.find(c => c.id === preventivo.clienteId || c.nome?.toLowerCase() === preventivo.clienteNome?.toLowerCase())
@@ -527,6 +561,7 @@ function WizardAccettazione({ preventivo, clienti, professionisti, onClose, onDo
                     <option value="consuntivo">A consuntivo</option>
                     <option value="anticipata">Anticipata</option>
                     <option value="rate">A rate</option>
+                    <option value="acconto_saldo">Acconto + Saldo</option>
                   </select>
                 </div>
                 <div style={S.group}>
@@ -549,6 +584,30 @@ function WizardAccettazione({ preventivo, clienti, professionisti, onClose, onDo
                   </div>
                 )}
               </div>
+              {modalitaFatturazione === 'acconto_saldo' && (
+                <div style={{ marginTop:12, background:'var(--cream-d)', borderRadius:10, padding:'14px 16px' }}>
+                  <div style={{ fontSize:12, fontWeight:700, textTransform:'uppercase', letterSpacing:'.4px', marginBottom:12, color:'var(--muted)' }}>Dettaglio Acconto + Saldo</div>
+                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                    <div style={S.group}>
+                      <label style={S.label}>% Acconto</label>
+                      <input type="number" min="1" max="99" style={inputStyle(false)}
+                        value={percentualeAcconto} onChange={e => setPercentualeAcconto(parseInt(e.target.value)||50)} />
+                    </div>
+                    <div style={S.group}>
+                      <label style={S.label}>Data acconto</label>
+                      <input type="date" style={inputStyle(false)} value={dataAcconto} onChange={e => setDataAcconto(e.target.value)} />
+                    </div>
+                    <div style={S.group}>
+                      <label style={S.label}>% Saldo (automatico)</label>
+                      <input type="number" style={{ ...inputStyle(false), background:'#f5f5f5', color:'var(--muted)' }} value={100-percentualeAcconto} disabled />
+                    </div>
+                    <div style={S.group}>
+                      <label style={S.label}>Data saldo (vuoto = chiusura progetto)</label>
+                      <input type="date" style={inputStyle(false)} value={dataSaldo} onChange={e => setDataSaldo(e.target.value)} />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -716,28 +775,37 @@ export default function Preventivi() {
   const servizi    = useServizi()
   const { clienti, professionisti } = useData()
 
-  const [modal, setModal] = useState(null)        // null | 'new' | {prev}
-  const [wizard, setWizard] = useState(null)      // null | {prev}
+  const [modal, setModal] = useState(null)
+  const [wizard, setWizard] = useState(null)
   const [search, setSearch] = useState('')
   const [filtroStato, setFiltroStato] = useState('')
   const [success, setSuccess] = useState('')
+  const [pannelloAccettati, setPannelloAccettati] = useState(false)
+  const [prevDettaglio, setPrevDettaglio] = useState(null)
 
   const stats = useMemo(() => {
     const all = preventivi
-    const accettati = all.filter(p => ['Da Contrattualizzare','Contrattualizzato'].includes(p.stato))
+    const accettati = all.filter(p => p.stato === 'Contrattualizzato')
     const inviati   = all.filter(p => p.stato === 'Preventivo Inviato')
+    const fatturato = accettati.reduce((s,p) => s + prevCompute(p).prezzoNetto, 0)
+    const margineAvg = accettati.length ? accettati.reduce((s,p) => s + prevCompute(p).marginePerc, 0) / accettati.length : 0
+    const margineEur = accettati.reduce((s,p) => s + prevCompute(p).margine, 0)
     return {
-      totale:     all.length,
-      accettati:  accettati.length,
-      inviati:    inviati.length,
-      fatturato:  accettati.reduce((s,p) => s + prevCompute(p).prezzoNetto, 0),
-      pipeline:   inviati.reduce((s,p) => s + prevCompute(p).prezzoNetto, 0),
-      margineAvg: accettati.length ? accettati.reduce((s,p) => s + prevCompute(p).marginePerc, 0) / accettati.length : 0,
+      totale: all.filter(p => p.stato !== 'Contrattualizzato').length,
+      accettati: accettati.length,
+      inviati: inviati.length,
+      fatturato,
+      pipeline: inviati.reduce((s,p) => s + prevCompute(p).prezzoNetto, 0),
+      margineAvg,
+      margineEur,
+      listaAccettati: accettati,
     }
   }, [preventivi])
 
   const lista = useMemo(() => {
-    let arr = [...preventivi].sort((a,b) => (b.data||'').localeCompare(a.data||''))
+    let arr = [...preventivi]
+      .filter(p => p.stato !== 'Contrattualizzato')
+      .sort((a,b) => (b.data||'').localeCompare(a.data||''))
     if (search) { const q = search.toLowerCase(); arr = arr.filter(p => (p.progetto||'').toLowerCase().includes(q) || (p.clienteNome||'').toLowerCase().includes(q) || (p.excelId||'').toLowerCase().includes(q)) }
     if (filtroStato) arr = arr.filter(p => p.stato === filtroStato)
     return arr
@@ -788,9 +856,99 @@ export default function Preventivi() {
       <div className="grid-4" style={{ marginBottom:20 }}>
         <div className="stat-card"><div className="stat-label">Totale preventivi</div><div className="stat-value">{stats.totale}</div></div>
         <div className="stat-card gold"><div className="stat-label">Pipeline (inviati)</div><div className="stat-value">{Math.round(stats.pipeline/1000)}k€</div><div className="stat-note">{stats.inviati} preventivi</div></div>
-        <div className="stat-card green"><div className="stat-label">Fatturato accettato</div><div className="stat-value">{Math.round(stats.fatturato/1000)}k€</div><div className="stat-note">{stats.accettati} preventivi</div></div>
+        <div className="stat-card green" onClick={() => setPannelloAccettati(true)} style={{ cursor:'pointer', transition:'box-shadow .15s' }} onMouseEnter={e=>e.currentTarget.style.boxShadow='0 4px 16px rgba(82,161,163,.25)'} onMouseLeave={e=>e.currentTarget.style.boxShadow=''}>
+          <div className="stat-label">Fatturato accettato 🔍</div>
+          <div className="stat-value">{Math.round(stats.fatturato/1000)}k€</div>
+          <div className="stat-note">{stats.accettati} contratti — margine {fmt(stats.margineEur)} ({stats.margineAvg.toFixed(0)}%)</div>
+        </div>
         <div className="stat-card"><div className="stat-label">Margine medio</div><div className="stat-value">{stats.margineAvg.toFixed(0)}%</div><div className="stat-note">su preventivi accettati</div></div>
       </div>
+
+      {/* Pannello accettati */}
+      {pannelloAccettati && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.6)', display:'flex', alignItems:'flex-start', justifyContent:'center', zIndex:200, padding:'24px 16px', overflowY:'auto', backdropFilter:'blur(4px)' }} onClick={e => { if(e.target===e.currentTarget){ setPannelloAccettati(false); setPrevDettaglio(null) }}}>
+          <div style={{ background:'var(--cream)', border:'1px solid var(--line)', borderRadius:16, width:'100%', maxWidth:860, boxShadow:'0 8px 32px rgba(0,0,0,.12)' }}>
+            <div style={{ background:'var(--ink)', padding:'16px 24px', borderRadius:'16px 16px 0 0', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+              <span style={{ fontFamily:'var(--font-head)', fontSize:14, fontWeight:800, textTransform:'uppercase', letterSpacing:'.5px', color:'#fff' }}>
+                ✅ Preventivi Accettati ({stats.accettati})
+              </span>
+              <button onClick={() => { setPannelloAccettati(false); setPrevDettaglio(null) }} style={{ background:'none', border:'none', color:'rgba(255,255,255,.7)', fontSize:20, cursor:'pointer' }}>✕</button>
+            </div>
+            <div style={{ padding:'16px 24px', background:'rgba(82,161,163,.08)', borderBottom:'1px solid var(--line)', display:'flex', gap:24 }}>
+              <div><span style={{ fontSize:11, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.4px' }}>Fatturato totale</span><div style={{ fontSize:20, fontWeight:800, fontFamily:'var(--font-head)', color:'var(--teal-d)' }}>{fmt(stats.fatturato)}</div></div>
+              <div><span style={{ fontSize:11, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.4px' }}>Margine totale</span><div style={{ fontSize:20, fontWeight:800, fontFamily:'var(--font-head)', color:'var(--teal-d)' }}>{fmt(stats.margineEur)}</div></div>
+              <div><span style={{ fontSize:11, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.4px' }}>Margine medio %</span><div style={{ fontSize:20, fontWeight:800, fontFamily:'var(--font-head)', color:'var(--teal-d)' }}>{stats.margineAvg.toFixed(0)}%</div></div>
+            </div>
+            <div style={{ padding:'16px 24px', maxHeight:'60vh', overflowY:'auto' }}>
+              {prevDettaglio ? (
+                <div>
+                  <button onClick={() => setPrevDettaglio(null)} style={{ marginBottom:16, padding:'6px 14px', background:'#fff', border:'1.5px solid var(--line)', borderRadius:8, cursor:'pointer', fontSize:12, fontWeight:700 }}>← Torna alla lista</button>
+                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                    {[
+                      { label:'Progetto', val: prevDettaglio.progetto },
+                      { label:'Cliente', val: prevDettaglio.clienteNome },
+                      { label:'Data', val: prevDettaglio.data },
+                      { label:'Tipo contratto', val: prevDettaglio.tipoContratto === 'ricorrente' ? `Ricorrente ${prevDettaglio.durata}m` : 'Una tantum' },
+                      { label:'Fatturazione', val: prevDettaglio.modalitaFatturazione },
+                      { label:'Inizio', val: prevDettaglio.meseInizio ? `${MESI[prevDettaglio.meseInizio-1]} ${prevDettaglio.annoInizio}` : '—' },
+                    ].map(({label,val}) => (
+                      <div key={label} style={{ padding:'10px 14px', background:'#fff', borderRadius:8, border:'1px solid var(--line)' }}>
+                        <div style={{ fontSize:10, textTransform:'uppercase', letterSpacing:'.5px', color:'var(--muted)', marginBottom:4 }}>{label}</div>
+                        <div style={{ fontSize:13, fontWeight:700 }}>{val||'—'}</div>
+                      </div>
+                    ))}
+                  </div>
+                  {(() => { const c = prevCompute(prevDettaglio); return (
+                    <div style={{ marginTop:16, display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12 }}>
+                      <div style={{ padding:'12px 16px', background:'rgba(82,161,163,.08)', borderRadius:10, border:'1px solid rgba(82,161,163,.2)' }}>
+                        <div style={{ fontSize:10, textTransform:'uppercase', letterSpacing:'.5px', color:'var(--muted)', marginBottom:4 }}>Prezzo netto</div>
+                        <div style={{ fontSize:16, fontWeight:800, fontFamily:'var(--font-head)' }}>{fmt(c.prezzoNetto)}</div>
+                      </div>
+                      <div style={{ padding:'12px 16px', background:'rgba(82,161,163,.08)', borderRadius:10, border:'1px solid rgba(82,161,163,.2)' }}>
+                        <div style={{ fontSize:10, textTransform:'uppercase', letterSpacing:'.5px', color:'var(--muted)', marginBottom:4 }}>Margine €</div>
+                        <div style={{ fontSize:16, fontWeight:800, fontFamily:'var(--font-head)', color:'var(--teal-d)' }}>{fmt(c.margine)}</div>
+                      </div>
+                      <div style={{ padding:'12px 16px', background:'rgba(82,161,163,.08)', borderRadius:10, border:'1px solid rgba(82,161,163,.2)' }}>
+                        <div style={{ fontSize:10, textTransform:'uppercase', letterSpacing:'.5px', color:'var(--muted)', marginBottom:4 }}>Margine %</div>
+                        <div style={{ fontSize:16, fontWeight:800, fontFamily:'var(--font-head)', color:'var(--teal-d)' }}>{c.marginePerc.toFixed(0)}%</div>
+                      </div>
+                    </div>
+                  )})()}
+                  <div style={{ marginTop:16, textAlign:'right' }}>
+                    <button onClick={() => { setModal(prevDettaglio); setPannelloAccettati(false); setPrevDettaglio(null) }} style={{ padding:'9px 20px', background:'var(--ink)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13, fontWeight:700 }}>✏️ Modifica preventivo</button>
+                  </div>
+                </div>
+              ) : (
+                <table style={{ width:'100%', borderCollapse:'collapse' }}>
+                  <thead>
+                    <tr style={{ borderBottom:'2px solid var(--line)' }}>
+                      {['Data','Cliente','Progetto','Prezzo netto','Margine €','Margine %',''].map(h => (
+                        <th key={h} style={{ padding:'8px 10px', fontSize:11, textTransform:'uppercase', letterSpacing:'.4px', color:'var(--muted)', textAlign: h===''||h==='Progetto'||h==='Cliente' ? 'left' : 'right', fontWeight:700 }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {stats.listaAccettati.map(p => {
+                      const c = prevCompute(p)
+                      return (
+                        <tr key={p._fsId} style={{ borderBottom:'1px solid var(--line)', cursor:'pointer' }} onClick={() => setPrevDettaglio(p)} onMouseEnter={e=>e.currentTarget.style.background='rgba(82,161,163,.05)'} onMouseLeave={e=>e.currentTarget.style.background=''}>
+                          <td style={{ padding:'10px', fontSize:12, color:'var(--text-dim)' }}>{p.data||'—'}</td>
+                          <td style={{ padding:'10px', fontWeight:500, fontSize:13 }}>{p.clienteNome||'—'}</td>
+                          <td style={{ padding:'10px', fontSize:13, maxWidth:180, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.progetto||'—'}</td>
+                          <td style={{ padding:'10px', textAlign:'right', fontWeight:700, fontSize:13 }}>{fmt(c.prezzoNetto)}</td>
+                          <td style={{ padding:'10px', textAlign:'right', fontWeight:700, fontSize:13, color:'var(--teal-d)' }}>{fmt(c.margine)}</td>
+                          <td style={{ padding:'10px', textAlign:'right', fontWeight:700, fontSize:13, color:'var(--teal-d)' }}>{c.marginePerc.toFixed(0)}%</td>
+                          <td style={{ padding:'10px', textAlign:'right' }}><span style={{ fontSize:11, color:'var(--teal)', fontWeight:600 }}>Dettaglio →</span></td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Filtri */}
       <div className="card" style={{ marginBottom:16 }}>
