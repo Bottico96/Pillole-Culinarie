@@ -288,6 +288,7 @@ function PrevModal({ preventivo, clienti, servizi, onClose, onSave }) {
                   <option value="anticipata">Anticipata</option>
                   <option value="rate">A rate</option>
                   <option value="acconto_saldo">Acconto + Saldo</option>
+                  <option value="tranche">A tranche (date personalizzate)</option>
                 </select>
               </div>
             </div>
@@ -388,6 +389,43 @@ function PrevModal({ preventivo, clienti, servizi, onClose, onSave }) {
             })}
           </div>
 
+          {/* Fatturazione a tranche */}
+          {form.modalitaFatturazione === 'tranche' && (
+            <div style={{ background:'#fff', border:'1.5px solid var(--line)', borderRadius:10, padding:16, marginBottom:20 }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
+                <div style={{ fontFamily:'var(--font-head)', fontSize:12, fontWeight:700, textTransform:'uppercase', letterSpacing:'.5px' }}>Date di fatturazione</div>
+                <button onClick={() => set('tranche', [...(form.tranche||[]), { _k: Math.random().toString(36).slice(2), data:'', importo:'' }])}
+                  style={{ padding:'6px 12px', background:'var(--ink)', color:'#fff', border:'none', borderRadius:7, cursor:'pointer', fontSize:12, fontWeight:700 }}>+ Aggiungi tranche</button>
+              </div>
+              {(form.tranche||[]).length === 0 && (
+                <div style={{ textAlign:'center', padding:20, color:'var(--text-dim)', border:'1.5px dashed var(--line)', borderRadius:8, fontSize:12 }}>Nessuna tranche. Clicca "+ Aggiungi tranche".</div>
+              )}
+              {(form.tranche||[]).map((t, idx) => (
+                <div key={t._k} style={{ display:'grid', gridTemplateColumns:'1fr 1fr auto', gap:10, alignItems:'end', marginBottom:8 }}>
+                  <div>
+                    <label style={S.label}>Data fatturazione</label>
+                    <input type="date" style={inputStyle(false)} value={t.data}
+                      onChange={e => set('tranche', (form.tranche||[]).map((x,i) => i===idx ? {...x, data:e.target.value} : x))} />
+                  </div>
+                  <div>
+                    <label style={S.label}>Importo (€)</label>
+                    <input type="number" step="0.01" style={{ ...inputStyle(false), textAlign:'right' }} value={t.importo}
+                      onChange={e => set('tranche', (form.tranche||[]).map((x,i) => i===idx ? {...x, importo:e.target.value} : x))}
+                      placeholder="0,00" />
+                  </div>
+                  <button onClick={() => set('tranche', (form.tranche||[]).filter((_,i) => i!==idx))}
+                    style={{ padding:'10px 12px', background:'none', border:'1.5px solid var(--red)', borderRadius:8, cursor:'pointer', color:'var(--red)', fontSize:14 }}>✕</button>
+                </div>
+              ))}
+              {(form.tranche||[]).length > 0 && (
+                <div style={{ marginTop:8, padding:'8px 12px', background:'var(--cream-d)', borderRadius:8, display:'flex', justifyContent:'space-between', fontSize:13 }}>
+                  <span style={{ color:'var(--muted)', fontWeight:500 }}>Totale tranche</span>
+                  <span style={{ fontWeight:800 }}>{fmt((form.tranche||[]).reduce((s,t) => s + (parseFloat(t.importo)||0), 0))}</span>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Calcoli */}
           <div style={S.calcBox}>
             <div style={{ fontFamily:'var(--font-head)', fontSize:12, fontWeight:700, textTransform:'uppercase', letterSpacing:'.5px', marginBottom:14 }}>Calcolo economico</div>
@@ -399,26 +437,70 @@ function PrevModal({ preventivo, clienti, servizi, onClose, onSave }) {
             </div>
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:14 }}>
               <div style={S.group}>
-                <label style={S.label}>Prezzo override (vuoto = automatico)</label>
+                <label style={S.label}>{form.tipoContratto === 'ricorrente' ? 'Prezzo override mensile (€/mese)' : 'Prezzo override (vuoto = automatico)'}</label>
                 <input type="number" step="0.01" style={inputStyle(false)}
                   value={form.prezzoOverride||''} onChange={e => set('prezzoOverride', e.target.value)}
-                  placeholder={fmt(calc.prezzoAuto)} />
+                  placeholder={form.tipoContratto === 'ricorrente' ? fmt(calc.prezzoAuto / (form.durata||12)) : fmt(calc.prezzoAuto)} />
               </div>
             </div>
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(5, 1fr)', gap:10 }}>
-              {[
-                { label:'Costo Pillole', val: fmt(calc.costoTot) },
-                { label:'Prezzo netto', val: fmt(calc.prezzoNetto), hi:true },
-                { label:'IVA 22%', val: fmt(calc.iva) },
-                { label:'Totale lordo', val: fmt(calc.totaleLordo), bold:true },
-                { label:`Margine ${calc.marginePerc.toFixed(0)}%`, val: fmt(calc.margine), col: calc.margine >= 0 ? 'var(--teal)' : 'var(--red)' },
-              ].map(({ label, val, hi, bold, col }) => (
-                <div key={label} style={{ background:'#fff', borderRadius:8, padding:'10px 12px', border: hi ? '2px solid var(--teal)' : '1px solid var(--line)' }}>
-                  <div style={{ fontSize:10, textTransform:'uppercase', letterSpacing:'.5px', color:'var(--muted)', marginBottom:4 }}>{label}</div>
-                  <div style={{ fontSize:14, fontWeight: bold||hi ? 800 : 600, fontFamily:'var(--font-head)', color: col||'var(--ink)' }}>{val}</div>
+            {form.tipoContratto === 'ricorrente' ? (() => {
+              const durata = form.durata || 12
+              const costoMensile = calc.costoTot / durata
+              const prezzoMensile = parseFloat(form.prezzoOverride) > 0 ? parseFloat(form.prezzoOverride) : calc.prezzoNetto / durata
+              const prezzoTotale = prezzoMensile * durata
+              const costoTotale = costoMensile * durata
+              const ivaTotale = prezzoTotale * 0.22
+              const lordoTotale = prezzoTotale + ivaTotale
+              const margineTotale = prezzoTotale - costoTotale
+              const marginePerc = prezzoTotale > 0 ? (margineTotale / prezzoTotale) * 100 : 0
+              return (
+                <div>
+                  <div style={{ fontSize:11, color:'var(--muted)', fontWeight:600, textTransform:'uppercase', letterSpacing:'.4px', marginBottom:8 }}>Mensile</div>
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:10, marginBottom:12 }}>
+                    {[
+                      { label:'Costo Pillole/mese', val: fmt(costoMensile) },
+                      { label:'Prezzo netto/mese', val: fmt(prezzoMensile), hi:true },
+                      { label:`Margine/mese ${marginePerc.toFixed(0)}%`, val: fmt(prezzoMensile - costoMensile), col: (prezzoMensile-costoMensile)>=0?'var(--teal)':'var(--red)' },
+                    ].map(({ label, val, hi, col }) => (
+                      <div key={label} style={{ background:'#fff', borderRadius:8, padding:'10px 12px', border: hi ? '2px solid var(--teal)' : '1px solid var(--line)' }}>
+                        <div style={{ fontSize:10, textTransform:'uppercase', letterSpacing:'.5px', color:'var(--muted)', marginBottom:4 }}>{label}</div>
+                        <div style={{ fontSize:13, fontWeight: hi ? 800 : 600, fontFamily:'var(--font-head)', color: col||'var(--ink)' }}>{val}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ fontSize:11, color:'var(--muted)', fontWeight:600, textTransform:'uppercase', letterSpacing:'.4px', marginBottom:8 }}>Totale ({durata} mesi)</div>
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(5, 1fr)', gap:10 }}>
+                    {[
+                      { label:'Costo Pillole totale', val: fmt(costoTotale) },
+                      { label:'Prezzo netto totale', val: fmt(prezzoTotale), hi:true },
+                      { label:'IVA 22%', val: fmt(ivaTotale) },
+                      { label:'Totale lordo', val: fmt(lordoTotale), bold:true },
+                      { label:`Margine totale ${marginePerc.toFixed(0)}%`, val: fmt(margineTotale), col: margineTotale>=0?'var(--teal)':'var(--red)' },
+                    ].map(({ label, val, hi, bold, col }) => (
+                      <div key={label} style={{ background:'#fff', borderRadius:8, padding:'10px 12px', border: hi ? '2px solid var(--teal)' : '1px solid var(--line)' }}>
+                        <div style={{ fontSize:10, textTransform:'uppercase', letterSpacing:'.5px', color:'var(--muted)', marginBottom:4 }}>{label}</div>
+                        <div style={{ fontSize:13, fontWeight: bold||hi ? 800 : 600, fontFamily:'var(--font-head)', color: col||'var(--ink)' }}>{val}</div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ))}
-            </div>
+              )
+            })() : (
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(5, 1fr)', gap:10 }}>
+                {[
+                  { label:'Costo Pillole', val: fmt(calc.costoTot) },
+                  { label:'Prezzo netto', val: fmt(calc.prezzoNetto), hi:true },
+                  { label:'IVA 22%', val: fmt(calc.iva) },
+                  { label:'Totale lordo', val: fmt(calc.totaleLordo), bold:true },
+                  { label:`Margine ${calc.marginePerc.toFixed(0)}%`, val: fmt(calc.margine), col: calc.margine >= 0 ? 'var(--teal)' : 'var(--red)' },
+                ].map(({ label, val, hi, bold, col }) => (
+                  <div key={label} style={{ background:'#fff', borderRadius:8, padding:'10px 12px', border: hi ? '2px solid var(--teal)' : '1px solid var(--line)' }}>
+                    <div style={{ fontSize:10, textTransform:'uppercase', letterSpacing:'.5px', color:'var(--muted)', marginBottom:4 }}>{label}</div>
+                    <div style={{ fontSize:14, fontWeight: bold||hi ? 800 : 600, fontFamily:'var(--font-head)', color: col||'var(--ink)' }}>{val}</div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Note */}
