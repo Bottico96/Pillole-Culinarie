@@ -563,28 +563,57 @@ export default function Calendario() {
               onChange={e => setSpostaModal(s => ({ ...s, nuovaData: e.target.value }))} />
             <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
               <button onClick={() => setSpostaModal(null)} style={{ padding:'8px 16px', background:'#fff', border:'1.5px solid var(--line)', borderRadius:8, cursor:'pointer', fontSize:13 }}>Annulla</button>
-              <button onClick={() => {
-                if (spostaModal.tipo === 'cf') spostaCostoFisso(spostaModal.item, spostaModal.nuovaData)
-                else if (spostaModal.tipo === 'emessa') spostaFattura('emessa', spostaModal.item, spostaModal.nuovaData)
-                else if (spostaModal.tipo === 'bdg_emessa') {
-                  // sposta scadenza del progetto
+              <button
+                disabled={!spostaModal.nuovaData}
+                onClick={() => {
+                if (!spostaModal.nuovaData) return
+                if (spostaModal.tipo === 'cf') {
+                  spostaCostoFisso(spostaModal.item, spostaModal.nuovaData)
+                } else if (spostaModal.tipo === 'emessa') {
+                  spostaFattura('emessa', spostaModal.item, spostaModal.nuovaData)
+                } else if (spostaModal.tipo === 'bdg_emessa') {
+                  // per contratti spot sposta la singola scadenza
+                  // per ricorrenti aggiungiamo uno spostamento solo per quel mese specifico
                   const prog = progetti.find(p => p.id === spostaModal.item.progettoId)
-                  if (prog && prog.tipo === 'spot') {
+                  if (prog) {
                     const d = new Date(spostaModal.nuovaData + 'T00:00:00')
-                    const nuovoMese = d.getMonth()+1; const nuovoAnno = d.getFullYear()
+                    const nuovoMese = d.getMonth()+1
+                    const nuovoAnno = d.getFullYear()
                     import('../../lib/db').then(({updateItem:upd}) => {
-                      const scadenze = (prog.scadenze||[]).map(sc => sc.data === spostaModal.item.data ? {...sc, data: spostaModal.nuovaData} : sc)
-                      upd(cols.progetti, prog.id, {...prog, scadenze, meseInizio: nuovoMese, annoInizio: nuovoAnno})
-                    })
-                  } else if (prog) {
-                    const d = new Date(spostaModal.nuovaData + 'T00:00:00')
-                    import('../../lib/db').then(({updateItem:upd}) => {
-                      upd(cols.progetti, prog.id, {...prog, meseInizio: d.getMonth()+1, annoInizio: d.getFullYear()})
+                      if (prog.tipo === 'spot') {
+                        const scadenze = (prog.scadenze||[]).map(sc =>
+                          sc.data === spostaModal.item.data ? {...sc, data: spostaModal.nuovaData} : sc
+                        )
+                        upd(cols.progetti, prog.id, {...prog, scadenze})
+                      } else {
+                        // ricorrente: aggiungi override di spostamento per mese/anno originale
+                        const spostamenti = [...(prog.spostamenti||[])]
+                        spostamenti.push({ meseOriginale: mese, annoOriginale: anno, nuovoMese, nuovoAnno })
+                        upd(cols.progetti, prog.id, {...prog, spostamenti})
+                      }
                     })
                   }
                   setSpostaModal(null)
+                } else if (spostaModal.tipo === 'bdg_ricevuta') {
+                  // sposta la scadenza della fattura ricevuta: aggiungi override sul progetto
+                  const d = new Date(spostaModal.nuovaData + 'T00:00:00')
+                  const nuovoMese = d.getMonth()+1
+                  const nuovoAnno = d.getFullYear()
+                  // trova il progetto collegato tramite la chiave della voce
+                  const item = spostaModal.item
+                  const profId = item.prof?.id
+                  // trova tutti i progetti che hanno questo prof con costo nel mese corrente
+                  const progettiProf = progetti.filter(p => (p.costi||[]).some(c => String(c.profId)===String(profId)))
+                  import('../../lib/db').then(({updateItem:upd}) => {
+                    progettiProf.forEach(prog => {
+                      const spostamenti = [...(prog.spostamenti||[])]
+                      spostamenti.push({ profId, meseOriginale: mese, annoOriginale: anno, nuovoMese, nuovoAnno })
+                      upd(cols.progetti, prog.id, {...prog, spostamenti})
+                    })
+                  })
+                  setSpostaModal(null)
                 }
-              }} style={{ padding:'8px 20px', background:'var(--ink)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13, fontWeight:700 }}>Conferma</button>
+              }} style={{ padding:'8px 20px', background: spostaModal.nuovaData ? 'var(--ink)' : '#ccc', color:'#fff', border:'none', borderRadius:8, cursor: spostaModal.nuovaData ? 'pointer' : 'not-allowed', fontSize:13, fontWeight:700 }}>Conferma</button>
             </div>
           </div>
         </div>
