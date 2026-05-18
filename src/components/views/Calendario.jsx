@@ -143,6 +143,45 @@ export default function Calendario() {
     fattureRicevute.some(f => f.chiave === key && f.mese === mese && f.anno === anno)
 
   // ── Azioni ───────────────────────────────────────────────────
+  const [spostaModal, setSpostaModal] = useState(null) // { tipo:'emessa'|'ricevuta'|'cf', item, nuovaData }
+
+  const spostaFattura = async (tipo, item, nuovaData) => {
+    if (!nuovaData) return
+    const d = new Date(nuovaData + 'T00:00:00')
+    const nuovoMese = d.getMonth() + 1
+    const nuovoAnno = d.getFullYear()
+    if (tipo === 'emessa') {
+      const { updateItem: upd } = await import('../../lib/db')
+      await upd(cols.fattureEmesse, item.id, { ...item, mese: nuovoMese, anno: nuovoAnno, data: nuovaData })
+    } else {
+      const { updateItem: upd } = await import('../../lib/db')
+      await upd(cols.fattureRicevute, item.id, { ...item, mese: nuovoMese, anno: nuovoAnno, data: nuovaData })
+    }
+    setSpostaModal(null)
+  }
+
+  const pagaCostoFisso = async (cf) => {
+    const { updateItem: upd } = await import('../../lib/db')
+    const mesiPagati = [...(cf.mesiPagati || [])]
+    const chiave = `${anno}-${mese}`
+    if (!mesiPagati.includes(chiave)) mesiPagati.push(chiave)
+    await upd(cols.costiFissi, cf.id, { ...cf, mesiPagati })
+  }
+
+  const annullaPagamento = async (cf) => {
+    const { updateItem: upd } = await import('../../lib/db')
+    const mesiPagati = (cf.mesiPagati || []).filter(k => k !== `${anno}-${mese}`)
+    await upd(cols.costiFissi, cf.id, { ...cf, mesiPagati })
+  }
+
+  const spostaCostoFisso = async (cf, nuovaData) => {
+    if (!nuovaData) return
+    const d = new Date(nuovaData + 'T00:00:00')
+    const { updateItem: upd } = await import('../../lib/db')
+    await upd(cols.costiFissi, cf.id, { ...cf, giorno: d.getDate(), meseInizio: d.getMonth() + 1, annoInizio: d.getFullYear() })
+    setSpostaModal(null)
+  }
+
   const segnaEmessa = async (riga) => {
     if (isEmessa(riga.progettoId)) return
 
@@ -318,6 +357,7 @@ export default function Calendario() {
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <span style={{ fontWeight: 700, color: 'var(--green)' }}>{fmt(f.importo)}</span>
+                            <button onClick={() => setSpostaModal({ tipo:'emessa', item:f, nuovaData: f.data||'' })} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--teal)', fontSize:14, fontWeight:700 }}>📅</button>
                             <button onClick={() => annullaEmessa(f.id, f.progettoId)} title="Annulla e riporta in budget" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-dim)', fontSize: 18, lineHeight: 1 }}>↩</button>
                           </div>
                         </div>
@@ -352,7 +392,10 @@ export default function Calendario() {
                                 <td className="text-right text-gold">{fmt(r.importo)}</td>
                                 <td className="text-right">{fmt(r.importo * 1.22)}</td>
                                 <td>
-                                  <button onClick={() => segnaEmessa(r)} style={{ background: 'rgba(45,122,58,0.1)', color: 'var(--green)', border: '1px solid rgba(45,122,58,0.3)', borderRadius: 6, padding: '4px 10px', fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>✓ Emessa</button>
+                                  <div style={{ display:'flex', gap:6 }}>
+                                    <button onClick={() => setSpostaModal({ tipo:'bdg_emessa', item:r, nuovaData:'' })} style={{ background:'rgba(82,161,163,.1)', color:'var(--teal-d)', border:'1px solid rgba(82,161,163,.3)', borderRadius:6, padding:'4px 10px', fontSize:11, fontWeight:700, cursor:'pointer' }}>📅 Sposta</button>
+                                    <button onClick={() => segnaEmessa(r)} style={{ background: 'rgba(45,122,58,0.1)', color: 'var(--green)', border: '1px solid rgba(45,122,58,0.3)', borderRadius: 6, padding: '4px 10px', fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>✓ Emessa</button>
+                                  </div>
                                 </td>
                               </tr>
                             ))}
@@ -422,6 +465,7 @@ export default function Calendario() {
                                 <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{e.fisso ? '🔒 ' : ''}{e.desc}</span>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                                   <span style={{ fontSize: 12, fontWeight: 500 }}>{fmt(e.importo)}</span>
+                                  <button onClick={() => setSpostaModal({ tipo:'bdg_ricevuta', item:{...e, prof}, nuovaData:'' })} style={{ background:'rgba(82,161,163,.1)', color:'var(--teal-d)', border:'1px solid rgba(82,161,163,.3)', borderRadius:6, padding:'3px 8px', fontSize:11, fontWeight:700, cursor:'pointer' }}>📅</button>
                                   <button onClick={() => segnaRicevuta(e, prof)} style={{ background: 'rgba(192,57,43,0.1)', color: 'var(--red)', border: '1px solid rgba(192,57,43,0.3)', borderRadius: 6, padding: '3px 8px', fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>✓ Ricevuta</button>
                                 </div>
                               </div>
@@ -454,19 +498,31 @@ export default function Calendario() {
                   else if (diff <= 3) { urgColor = 'var(--red)'; urgLabel = `fra ${diff}gg` }
                   else if (diff <= 7) { urgColor = 'var(--gold)'; urgLabel = `fra ${diff}gg` }
                 }
+                const chiave2 = `${anno}-${mese}`
+                const pagato = (cf.mesiPagati||[]).includes(chiave2)
                 return (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '12px 16px', borderBottom: i < cfMese.length - 1 ? '1px solid var(--border)' : 'none', background: i % 2 === 0 ? 'var(--surface)' : 'var(--surface2)' }}>
-                    <div style={{ width: 36, textAlign: 'center', flexShrink: 0 }}>
-                      <div style={{ fontSize: 16, fontWeight: 700, color: urgColor }}>{g || '—'}</div>
-                      <div style={{ fontSize: 9, color: urgColor, textTransform: 'uppercase' }}>{urgLabel}</div>
+                  <div key={i} style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 16px', borderBottom: i < cfMese.length-1 ? '1px solid var(--border)' : 'none', background: pagato ? 'rgba(45,122,58,.05)' : i%2===0 ? 'var(--surface)' : 'var(--surface2)' }}>
+                    <div style={{ width:36, textAlign:'center', flexShrink:0 }}>
+                      <div style={{ fontSize:16, fontWeight:700, color:urgColor }}>{g||'—'}</div>
+                      <div style={{ fontSize:9, color:urgColor, textTransform:'uppercase' }}>{urgLabel}</div>
                     </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 500, fontSize: 13 }}>{cf.descrizione}</div>
-                      <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>{cf.fornitore} · <span className="badge badge-purple" style={{ fontSize: 10 }}>{cf.categoria}</span></div>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ fontWeight:500, fontSize:13, display:'flex', alignItems:'center', gap:8 }}>
+                        {cf.descrizione}
+                        {pagato && <span style={{ fontSize:10, padding:'2px 7px', borderRadius:99, background:'rgba(45,122,58,.15)', color:'var(--green)', fontWeight:700 }}>✓ PAGATA</span>}
+                      </div>
+                      <div style={{ fontSize:11, color:'var(--text-dim)', marginTop:2 }}>{cf.fornitore} · <span className="badge badge-purple" style={{ fontSize:10 }}>{cf.categoria}</span></div>
                     </div>
-                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                      <div style={{ color: 'var(--purple)', fontWeight: 500 }}>{fmt(importo)}</div>
-                      <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>+ IVA {iva}% = {fmt(applyIva(importo, iva))}</div>
+                    <div style={{ textAlign:'right', flexShrink:0, marginRight:8 }}>
+                      <div style={{ color:'var(--purple)', fontWeight:500 }}>{fmt(importo)}</div>
+                      <div style={{ fontSize:11, color:'var(--text-dim)' }}>+ IVA {iva}% = {fmt(applyIva(importo,iva))}</div>
+                    </div>
+                    <div style={{ display:'flex', gap:6, flexShrink:0 }}>
+                      <button onClick={() => setSpostaModal({ tipo:'cf', item:cf, nuovaData:'' })} style={{ padding:'4px 8px', background:'rgba(82,161,163,.1)', color:'var(--teal-d)', border:'1px solid rgba(82,161,163,.3)', borderRadius:6, fontSize:11, fontWeight:700, cursor:'pointer' }}>📅 Sposta</button>
+                      {pagato
+                        ? <button onClick={() => annullaPagamento(cf)} style={{ padding:'4px 8px', background:'rgba(192,57,43,.1)', color:'var(--red)', border:'1px solid rgba(192,57,43,.3)', borderRadius:6, fontSize:11, fontWeight:700, cursor:'pointer' }}>↩ Annulla</button>
+                        : <button onClick={() => pagaCostoFisso(cf)} style={{ padding:'4px 8px', background:'rgba(45,122,58,.1)', color:'var(--green)', border:'1px solid rgba(45,122,58,.3)', borderRadius:6, fontSize:11, fontWeight:700, cursor:'pointer' }}>✓ Pagata</button>
+                      }
                     </div>
                   </div>
                 )
@@ -491,6 +547,48 @@ export default function Calendario() {
         </div>
 
       </div>
+      {/* Modale Sposta */}
+      {spostaModal && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.6)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:300, backdropFilter:'blur(4px)' }}
+          onClick={e => { if(e.target===e.currentTarget) setSpostaModal(null) }}>
+          <div style={{ background:'var(--cream)', border:'1px solid var(--line)', borderRadius:16, padding:28, width:340, boxShadow:'0 8px 32px rgba(0,0,0,.15)' }}>
+            <div style={{ fontFamily:'var(--font-head)', fontSize:14, fontWeight:800, textTransform:'uppercase', letterSpacing:'.5px', marginBottom:16 }}>
+              📅 Sposta a nuova data
+            </div>
+            <div style={{ fontSize:13, color:'var(--muted)', marginBottom:12 }}>
+              {spostaModal.tipo === 'cf' ? spostaModal.item.descrizione : spostaModal.item.cliente || spostaModal.item.prof?.nome || ''}
+            </div>
+            <input type="date" style={{ width:'100%', padding:'10px 12px', border:'1.5px solid var(--line)', borderRadius:8, fontSize:14, marginBottom:16, boxSizing:'border-box' }}
+              value={spostaModal.nuovaData}
+              onChange={e => setSpostaModal(s => ({ ...s, nuovaData: e.target.value }))} />
+            <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
+              <button onClick={() => setSpostaModal(null)} style={{ padding:'8px 16px', background:'#fff', border:'1.5px solid var(--line)', borderRadius:8, cursor:'pointer', fontSize:13 }}>Annulla</button>
+              <button onClick={() => {
+                if (spostaModal.tipo === 'cf') spostaCostoFisso(spostaModal.item, spostaModal.nuovaData)
+                else if (spostaModal.tipo === 'emessa') spostaFattura('emessa', spostaModal.item, spostaModal.nuovaData)
+                else if (spostaModal.tipo === 'bdg_emessa') {
+                  // sposta scadenza del progetto
+                  const prog = progetti.find(p => p.id === spostaModal.item.progettoId)
+                  if (prog && prog.tipo === 'spot') {
+                    const d = new Date(spostaModal.nuovaData + 'T00:00:00')
+                    const nuovoMese = d.getMonth()+1; const nuovoAnno = d.getFullYear()
+                    import('../../lib/db').then(({updateItem:upd}) => {
+                      const scadenze = (prog.scadenze||[]).map(sc => sc.data === spostaModal.item.data ? {...sc, data: spostaModal.nuovaData} : sc)
+                      upd(cols.progetti, prog.id, {...prog, scadenze, meseInizio: nuovoMese, annoInizio: nuovoAnno})
+                    })
+                  } else if (prog) {
+                    const d = new Date(spostaModal.nuovaData + 'T00:00:00')
+                    import('../../lib/db').then(({updateItem:upd}) => {
+                      upd(cols.progetti, prog.id, {...prog, meseInizio: d.getMonth()+1, annoInizio: d.getFullYear()})
+                    })
+                  }
+                  setSpostaModal(null)
+                }
+              }} style={{ padding:'8px 20px', background:'var(--ink)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13, fontWeight:700 }}>Conferma</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
