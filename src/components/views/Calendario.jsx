@@ -66,9 +66,37 @@ export default function Calendario() {
     }
 
     // BUDGET: tutte le voci non ancora consuntivate
+    // Helper: verifica se un progetto ricorrente ha uno spostamento per questo mese
+    const getMeseEffettivo = (p, meseOrig, annoOrig) => {
+      const sp = (p.spostamenti||[]).find(s => s.meseOriginale===meseOrig && s.annoOriginale===annoOrig && !s.profId)
+      return sp ? { mese: sp.nuovoMese, anno: sp.nuovoAnno } : { mese: meseOrig, anno: annoOrig }
+    }
+    const getMeseEffettivoProf = (p, profId, meseOrig, annoOrig) => {
+      const sp = (p.spostamenti||[]).find(s => String(s.profId)===String(profId) && s.meseOriginale===meseOrig && s.annoOriginale===annoOrig)
+      return sp ? { mese: sp.nuovoMese, anno: sp.nuovoAnno } : { mese: meseOrig, anno: annoOrig }
+    }
+
     const righeClienti = []
     progetti.forEach(p => {
-      if (emesseMeseIds.has(p.id)) return // già emessa → non mostrare in budget
+      if (emesseMeseIds.has(p.id)) return
+      // controlla se questo progetto ha uno spostamento che lo porta IN questo mese
+      const spostamentoEntrata = (p.spostamenti||[]).find(s => !s.profId && s.nuovoMese===mese && s.nuovoAnno===anno)
+      if (spostamentoEntrata) {
+        // fattura spostata in questo mese da un altro mese
+        const f = fatturatoCliente(p, spostamentoEntrata.annoOriginale, spostamentoEntrata.meseOriginale)
+        if (f > 0 && !emesseMeseIds.has(p.id)) {
+          righeClienti.push({
+            progettoId: p.id, cliente: p.nome || p.cliente,
+            servizio: p.nome || p.cliente,
+            importo: f, tipo: p.tipo, desc: '(spostata)', data: ''
+          })
+        }
+        return
+      }
+      // controlla se questo progetto ha uno spostamento che lo porta FUORI da questo mese
+      const spostamentoUscita = (p.spostamenti||[]).find(s => !s.profId && s.meseOriginale===mese && s.annoOriginale===anno)
+      if (spostamentoUscita) return // spostata in altro mese, non mostrare qui
+
       const f = fatturatoCliente(p, anno, mese)
       if (f <= 0) return
       if (p.tipo === 'spot' && p.scadenze?.length > 0) {
@@ -99,7 +127,14 @@ export default function Calendario() {
       progetti.forEach(p => {
         (p.costi || []).forEach(c => {
           if (String(c.profId) !== String(prof.id)) return
-          const imp = costoOperatoreMese(c, p, anno, mese)
+          // controlla spostamento uscita per questo prof
+          const spUscita = (p.spostamenti||[]).find(s => String(s.profId)===String(prof.id) && s.meseOriginale===mese && s.annoOriginale===anno)
+          if (spUscita) return // spostato in altro mese
+          // controlla se questo mese è destinazione di uno spostamento
+          const spEntrata = (p.spostamenti||[]).find(s => String(s.profId)===String(prof.id) && s.nuovoMese===mese && s.nuovoAnno===anno)
+          const meseCalc = spEntrata ? spEntrata.meseOriginale : mese
+          const annoCalc = spEntrata ? spEntrata.annoOriginale : anno
+          const imp = costoOperatoreMese(c, p, annoCalc, meseCalc)
           if (imp <= 0) return
           const key = `fr_${prof.id}_${((p.nome||p.cliente)+'__'+p.id).replace(/[^a-zA-Z0-9]/g,'').slice(0,15)}_${mese}_${anno}`
           if (ricevuteMeseChiavi.has(key)) return // già ricevuta → non in budget
