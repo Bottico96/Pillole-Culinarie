@@ -77,22 +77,25 @@ export default function Calendario() {
     }
 
     const righeClienti = []
+
+    // Prima passata: aggiungi fatture spostate IN questo mese
     progetti.forEach(p => {
       if (emesseMeseIds.has(p.id)) return
-      // controlla se questo progetto ha uno spostamento che lo porta IN questo mese
-      const spostamentoEntrata = (p.spostamenti||[]).find(s => !s.profId && s.nuovoMese===mese && s.nuovoAnno===anno)
-      if (spostamentoEntrata) {
-        // fattura spostata in questo mese da un altro mese
-        const f = fatturatoCliente(p, spostamentoEntrata.annoOriginale, spostamentoEntrata.meseOriginale)
-        if (f > 0 && !emesseMeseIds.has(p.id)) {
-          righeClienti.push({
-            progettoId: p.id, cliente: p.nome || p.cliente,
-            servizio: p.nome || p.cliente,
-            importo: f, tipo: p.tipo, desc: '(spostata)', data: ''
-          })
-        }
-        return
+      const spEntrata = (p.spostamenti||[]).find(s => !s.profId && s.nuovoMese===mese && s.nuovoAnno===anno)
+      if (!spEntrata) return
+      const f = fatturatoCliente(p, spEntrata.annoOriginale, spEntrata.meseOriginale)
+      if (f > 0) {
+        righeClienti.push({
+          progettoId: p.id, cliente: p.nome || p.cliente,
+          servizio: p.nome || p.cliente,
+          importo: f, tipo: p.tipo, desc: '(spostata)', data: ''
+        })
       }
+    })
+
+    // Seconda passata: aggiungi fatture normali (escluse quelle spostate altrove)
+    progetti.forEach(p => {
+      if (emesseMeseIds.has(p.id)) return
       // controlla se questo progetto ha uno spostamento che lo porta FUORI da questo mese
       const spostamentoUscita = (p.spostamenti||[]).find(s => !s.profId && s.meseOriginale===mese && s.annoOriginale===anno)
       if (spostamentoUscita) return // spostata in altro mese, non mostrare qui
@@ -139,7 +142,7 @@ export default function Calendario() {
           const key = `fr_${prof.id}_${((p.nome||p.cliente)+'__'+p.id).replace(/[^a-zA-Z0-9]/g,'').slice(0,15)}_${mese}_${anno}`
           if (ricevuteMeseChiavi.has(key)) return // già ricevuta → non in budget
           const dk = (p.nome || p.cliente) + '__' + p.id
-          entriesMap[dk] = { imp: (entriesMap[dk]?.imp || 0) + imp, key }
+          entriesMap[dk] = { imp: (entriesMap[dk]?.imp || 0) + imp, key, progettoId: p.id }
         })
       })
       const fissi = compensiFissiMese(prof, anno, mese)
@@ -148,9 +151,10 @@ export default function Calendario() {
         if (!ricevuteMeseChiavi.has(fKey)) entriesMap['__fisso__'] = { imp: fissi, key: fKey }
       }
 
-      const entries = Object.entries(entriesMap).map(([k, { imp, key }]) => ({
+      const entries = Object.entries(entriesMap).map(([k, { imp, key, progettoId }]) => ({
         desc: k === '__fisso__' ? 'Compenso fisso aziendale' : k.split('__')[0],
-        importo: imp, fisso: k === '__fisso__', key
+        importo: imp, fisso: k === '__fisso__', key,
+        progettoId: k === '__fisso__' ? null : progettoId || null
       }))
 
       if (entries.length > 0) profMap[prof.id] = { prof, entries }
@@ -630,22 +634,21 @@ export default function Calendario() {
                   }
                   setSpostaModal(null)
                 } else if (spostaModal.tipo === 'bdg_ricevuta') {
-                  // sposta la scadenza della fattura ricevuta: aggiungi override sul progetto
                   const d = new Date(spostaModal.nuovaData + 'T00:00:00')
                   const nuovoMese = d.getMonth()+1
                   const nuovoAnno = d.getFullYear()
-                  // trova il progetto collegato tramite la chiave della voce
                   const item = spostaModal.item
                   const profId = item.prof?.id
-                  // trova tutti i progetti che hanno questo prof con costo nel mese corrente
-                  const progettiProf = progetti.filter(p => (p.costi||[]).some(c => String(c.profId)===String(profId)))
-                  import('../../lib/db').then(({updateItem:upd}) => {
-                    progettiProf.forEach(prog => {
+                  // usa il progettoId specifico della voce, non tutti i progetti del prof
+                  const progettoId = item.progettoId
+                  const prog = progettoId ? progetti.find(p => p.id === progettoId) : null
+                  if (prog) {
+                    import('../../lib/db').then(({updateItem:upd}) => {
                       const spostamenti = [...(prog.spostamenti||[])]
                       spostamenti.push({ profId, meseOriginale: mese, annoOriginale: anno, nuovoMese, nuovoAnno })
                       upd(cols.progetti, prog.id, {...prog, spostamenti})
                     })
-                  })
+                  }
                   setSpostaModal(null)
                 }
               }} style={{ padding:'8px 20px', background: spostaModal.nuovaData ? 'var(--ink)' : '#ccc', color:'#fff', border:'none', borderRadius:8, cursor: spostaModal.nuovaData ? 'pointer' : 'not-allowed', fontSize:13, fontWeight:700 }}>Conferma</button>
