@@ -56,8 +56,15 @@ export default function Dashboard() {
             if (String(c.profId) === String(prof.id)) t += costoOperatoreFiltrato(c, p, anno, m, vista)
           })
         })
-        t += totaleProfMese(prof, [], anno, m)
       }
+      // also add direct project costs for this prof (importo * mesi)
+      progetti.forEach(p => {
+        ;(p.costi||[]).forEach(c => {
+          if (String(c.profId) === String(prof.id) && c.tipo !== 'mensile') {
+            // one-off costs not caught by monthly filter — add once
+          }
+        })
+      })
       totCOp += t; if (t > 0) byProf[prof.nome] = (byProf[prof.nome] || 0) + t
     })
     for (let m = 1; m <= 12; m++) {
@@ -86,8 +93,17 @@ export default function Dashboard() {
     const totFatt = progetti_cliente.reduce((s,p) => {
       let f = 0; for(let m=1;m<=12;m++) f += fatturatoFiltrato(p,anno,m,vista); return s+f
     }, 0)
-    const totCosti = progetti_cliente.reduce((s,p) => s + (p.costi||[]).reduce((ss,c) => ss+(parseFloat(c.importoLordo)||0), 0), 0)
-    const profCoinvolti = [...new Set(progetti_cliente.flatMap(p => (p.costi||[]).map(c => c.profNome).filter(Boolean)))]
+    const totCosti = progetti_cliente.reduce((s,p) => {
+      return s + (p.costi||[]).reduce((ss,c) => {
+        const importo = parseFloat(c.importo)||0
+        const mesi = c.tipo === 'mensile' ? (p.durata||12) : 1
+        return ss + importo * mesi
+      }, 0)
+    }, 0)
+    const profCoinvolti = [...new Set(progetti_cliente.flatMap(p => (p.costi||[]).map(c => {
+      const prof = professionisti.find(pr => pr.id === c.profId)
+      return prof?.nome || null
+    }).filter(Boolean)))]
 
     return (
       <PanelOverlay onClose={onClose}>
@@ -106,9 +122,16 @@ export default function Dashboard() {
           {progetti_cliente.length === 0 ? <p style={{color:'var(--muted)',fontSize:13}}>Nessun progetto.</p> :
             progetti_cliente.map(p => {
               let fatt = 0; for(let m=1;m<=12;m++) fatt += fatturatoFiltrato(p,anno,m,vista)
-              const costi = (p.costi||[]).reduce((s,c) => s+(parseFloat(c.importoLordo)||0), 0)
+              const costi = (p.costi||[]).reduce((s,c) => {
+                const importo = parseFloat(c.importo)||0
+                const mesi = c.tipo === 'mensile' ? (p.durata||12) : 1
+                return s + importo * mesi
+              }, 0)
               const margine = fatt - costi
-              const profs = [...new Set((p.costi||[]).map(c=>c.profNome).filter(Boolean))]
+              const profs = [...new Set((p.costi||[]).map(c => {
+                const prof = professionisti.find(pr => pr.id === c.profId)
+                return prof?.nome || null
+              }).filter(Boolean))]
               return (
                 <div key={p._fsId||p.id} style={{ background:'#fff', border:'1px solid var(--line)', borderRadius:10, padding:'14px 16px', marginBottom:12 }}>
                   <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:10 }}>
@@ -147,9 +170,13 @@ export default function Dashboard() {
     let totComp = 0
     const righe = progetti_prof.map(p => {
       const costi_prof = (p.costi||[]).filter(c => String(c.profId)===String(prof?.id))
-      const comp = costi_prof.reduce((s,c) => s+(parseFloat(c.importoLordo)||0), 0)
+      const comp = costi_prof.reduce((s,c) => {
+        const importo = parseFloat(c.importo)||0
+        const mesi = c.tipo === 'mensile' ? (p.durata||12) : 1
+        return s + importo * mesi
+      }, 0)
       totComp += comp
-      return { progetto: p.nome||p.progetto, cliente: p.cliente, comp, servizi: costi_prof.map(c=>c.servizio||c.descrizione).filter(Boolean) }
+      return { progetto: p.nome||p.progetto, cliente: p.cliente, comp, servizi: costi_prof.map(c=>c.tipo||'').filter(Boolean) }
     })
 
     return (
@@ -297,7 +324,7 @@ export default function Dashboard() {
             <div className="stat-value">{fmt(totCOp)}</div>
             <div className="stat-note">Professionisti e collaboratori</div>
           </div>
-          <div className="stat-card purple" onClick={()=>navigate('/costi-fissi')} style={{cursor:'pointer'}} title="Vai ai Costi Fissi">
+          <div className="stat-card purple" onClick={()=>navigate('/costifissi')} style={{cursor:'pointer'}} title="Vai ai Costi Fissi">
             <div className="stat-label">Costi Fissi →</div>
             <div className="stat-value">{fmt(totCF)}</div>
             <div className="stat-note">{costiFissi.length} voci attive</div>
