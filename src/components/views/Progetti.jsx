@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useData } from '../../hooks/useData'
 import { addItem, updateItem, deleteItem, cols } from '../../lib/db'
 import { fmt, MESI, fatturatoCliente, costoOperatoreMese, validaImporto, validaTesto, validaData } from '../../lib/calc'
@@ -24,7 +25,15 @@ export default function Progetti() {
   const { confirm, ConfirmModal } = useConfirm()
   const [showModal, setShowModal] = useState(false)
   const [editingId, setEditingId] = useState(null)
+  const location = useLocation()
   const [filtroAnno, setFiltroAnno] = useState(2026)
+  const [search, setSearch] = useState('')
+
+  useEffect(() => {
+    if (location.state?.filtroProgetto) {
+      setSearch(location.state.filtroProgetto)
+    }
+  }, [location.state])
   const [saving, setSaving] = useState(false)
   const [errori, setErrori] = useState([])
   const [fieldErrors, setFieldErrors] = useState({})
@@ -44,6 +53,13 @@ export default function Progetti() {
       return { ...p, totFat, totCosti, margine: totFat - totCosti }
     }).filter(p => getMesiProgetto(p).some(({ anno }) => anno === filtroAnno))
   }, [progetti, filtroAnno])
+
+  const progettiFiltrati = useMemo(() => {
+    if (!search) return progettiAnno
+    const q = search.toLowerCase()
+    return progettiAnno.filter(p => (p.nome||'').toLowerCase().includes(q) || (p.cliente||'').toLowerCase().includes(q))
+  }, [progettiAnno, search])
+
 
   const valida = () => {
     const fe = {}

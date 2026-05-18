@@ -94,11 +94,11 @@ export default function Dashboard() {
       let f = 0; for(let m=1;m<=12;m++) f += fatturatoFiltrato(p,anno,m,vista); return s+f
     }, 0)
     const totCosti = progetti_cliente.reduce((s,p) => {
-      return s + (p.costi||[]).reduce((ss,c) => {
-        const importo = parseFloat(c.importo)||0
-        const mesi = c.tipo === 'mensile' ? (p.durata||12) : 1
-        return ss + importo * mesi
-      }, 0)
+      let c_tot = 0
+      for (let m = 1; m <= 12; m++) {
+        ;(p.costi||[]).forEach(c => { c_tot += costoOperatoreFiltrato(c, p, anno, m, vista) })
+      }
+      return s + c_tot
     }, 0)
     const profCoinvolti = [...new Set(progetti_cliente.flatMap(p => (p.costi||[]).map(c => {
       const prof = professionisti.find(pr => pr.id === c.profId)
@@ -122,11 +122,10 @@ export default function Dashboard() {
           {progetti_cliente.length === 0 ? <p style={{color:'var(--muted)',fontSize:13}}>Nessun progetto.</p> :
             progetti_cliente.map(p => {
               let fatt = 0; for(let m=1;m<=12;m++) fatt += fatturatoFiltrato(p,anno,m,vista)
-              const costi = (p.costi||[]).reduce((s,c) => {
-                const importo = parseFloat(c.importo)||0
-                const mesi = c.tipo === 'mensile' ? (p.durata||12) : 1
-                return s + importo * mesi
-              }, 0)
+              let costi = 0
+              for (let m = 1; m <= 12; m++) {
+                ;(p.costi||[]).forEach(c => { costi += costoOperatoreFiltrato(c, p, anno, m, vista) })
+              }
               const margine = fatt - costi
               const profs = [...new Set((p.costi||[]).map(c => {
                 const prof = professionisti.find(pr => pr.id === c.profId)
@@ -139,7 +138,7 @@ export default function Dashboard() {
                       <div style={{ fontWeight:700, fontSize:14 }}>{p.nome||p.progetto||'—'}</div>
                       <div style={{ fontSize:11, color:'var(--muted)', marginTop:2 }}>{p.statoProgetto||'—'}</div>
                     </div>
-                    <button onClick={()=>{onClose();navigate('/progetti')}} style={{ fontSize:11, padding:'4px 10px', background:'var(--ink)', color:'#fff', border:'none', borderRadius:6, cursor:'pointer' }}>Vai al progetto →</button>
+                    <button onClick={()=>{onClose();navigate('/progetti', { state: { filtroProgetto: p.nome||p.progetto } })}} style={{ fontSize:11, padding:'4px 10px', background:'var(--ink)', color:'#fff', border:'none', borderRadius:6, cursor:'pointer' }}>Vai al progetto →</button>
                   </div>
                   <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:8 }}>
                     {[
@@ -170,11 +169,10 @@ export default function Dashboard() {
     let totComp = 0
     const righe = progetti_prof.map(p => {
       const costi_prof = (p.costi||[]).filter(c => String(c.profId)===String(prof?.id))
-      const comp = costi_prof.reduce((s,c) => {
-        const importo = parseFloat(c.importo)||0
-        const mesi = c.tipo === 'mensile' ? (p.durata||12) : 1
-        return s + importo * mesi
-      }, 0)
+      let comp = 0
+      for (let m = 1; m <= 12; m++) {
+        costi_prof.forEach(c => { comp += costoOperatoreFiltrato(c, p, anno, m, vista) })
+      }
       totComp += comp
       return { progetto: p.nome||p.progetto, cliente: p.cliente, comp, servizi: costi_prof.map(c=>c.tipo||'').filter(Boolean) }
     })
